@@ -177,95 +177,144 @@ export default function NoteEditorPage() {
 
                 <div className="flex-1" />
 
-                {words > 0 && (
-                    <span className="text-[11px] tabular-nums" style={{ color: 'var(--text-4)' }}>
-                        {words.toLocaleString()} words
+                <div className="flex items-center gap-1 sm:gap-3">
+                    {words > 0 && (
+                        <span className="text-[11px] tabular-nums mr-1 sm:mr-0" style={{ color: 'var(--text-4)' }}>
+                            {words.toLocaleString()} words
+                        </span>
+                    )}
+
+                    <span className="text-[11px] hidden sm:inline" style={{ color: 'var(--text-4)' }}>
+                        {saving ? 'Saving…' : saved ? '✓ Saved' : ''}
                     </span>
-                )}
 
-                <span className="text-[11px]" style={{ color: 'var(--text-4)' }}>
-                    {saving ? 'Saving…' : saved ? '✓ Saved' : ''}
-                </span>
+                    {/* Desktop Actions */}
+                    <div className="hidden sm:flex items-center gap-1">
+                        {!isNew && (
+                            <button
+                                onClick={handleToggleStar}
+                                title={currentNote?.starred ? 'Unstar' : 'Star'}
+                                className={`p-2 rounded hover:bg-[var(--bg-muted)] transition-colors ${currentNote?.starred ? 'text-yellow-500' : 'text-[var(--text-4)] hover:text-[var(--text-2)]'}`}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill={currentNote?.starred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                            </button>
+                        )}
 
-                {!isNew && (
-                    <button
-                        onClick={handleToggleStar}
-                        title={currentNote?.starred ? 'Unstar' : 'Star'}
-                        className={`p-2 rounded hover:bg-[var(--bg-muted)] transition-colors ${currentNote?.starred ? 'text-yellow-500' : 'text-[var(--text-4)] hover:text-[var(--text-2)]'}`}
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill={currentNote?.starred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                    </button>
-                )}
-
-                {/* Color Picker Popover */}
-                {!isNew && (
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowColorPicker(!showColorPicker)}
-                            title="Color Note"
-                            className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-4)] hover:text-[var(--text-2)]"
-                        >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5" /><circle cx="17.5" cy="10.5" r=".5" /><circle cx="8.5" cy="7.5" r=".5" /><circle cx="6.5" cy="12.5" r=".5" /><path d="M12 2a10 10 0 1 0 10 10c0-5.52-4.48-10-10-10z" /></svg>
-                        </button>
-                        {showColorPicker && (
-                            <div className="absolute right-0 top-full mt-2 p-2 bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-xl shadow-lg flex gap-1 z-50">
-                                {availableColors.map(c => (
-                                    <button
-                                        key={c.name}
-                                        title={c.name}
-                                        onClick={() => {
-                                            setColor(c.value);
-                                            setShowColorPicker(false);
-                                            useNotesStore.getState().setColor(currentNote!.id, c.value);
-                                        }}
-                                        className="w-6 h-6 rounded-full border border-[var(--border-soft)] hover:scale-110 transition-transform"
-                                        style={{ backgroundColor: c.value || 'var(--bg)' }}
-                                    />
-                                ))}
+                        {!isNew && (
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowColorPicker(!showColorPicker)}
+                                    title="Color Note"
+                                    className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-4)] hover:text-[var(--text-2)]"
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5" /><circle cx="17.5" cy="10.5" r=".5" /><circle cx="8.5" cy="7.5" r=".5" /><circle cx="6.5" cy="12.5" r=".5" /><path d="M12 2a10 10 0 1 0 10 10c0-5.52-4.48-10-10-10z" /></svg>
+                                </button>
+                                {showColorPicker && (
+                                    <div className="absolute right-0 top-full mt-2 p-2 bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-xl shadow-lg flex gap-1 z-50">
+                                        {availableColors.map(c => (
+                                            <button
+                                                key={c.name}
+                                                title={c.name}
+                                                onClick={() => {
+                                                    setNoteColor(c.value);
+                                                    setShowColorPicker(false);
+                                                    setColor(currentNote!.id, c.value);
+                                                }}
+                                                className="w-6 h-6 rounded-full border border-[var(--border-soft)] hover:scale-110 transition-transform"
+                                                style={{ backgroundColor: c.value || 'var(--bg)' }}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
+
+                        {!isNew && (
+                            <button
+                                onClick={handleToggleArchive}
+                                title={currentNote?.archived ? 'Unarchive' : 'Archive'}
+                                className={`p-2 rounded hover:bg-[var(--bg-muted)] transition-colors ${currentNote?.archived ? 'text-green-500' : 'text-[var(--text-4)] hover:text-[var(--text-2)]'}`}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" /><line x1="10" y1="12" x2="14" y2="12" /></svg>
+                            </button>
+                        )}
+
+                        {!isNew && (
+                            <Link href={`/graph/${noteId}`} title="View Graph" className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-4)] hover:text-[var(--text-2)]">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
+                            </Link>
+                        )}
+
+                        {!isNew && (
+                            <button
+                                onClick={handleDelete}
+                                title={currentNote?.trashed ? "Permanently Delete Note" : "Move to Trash"}
+                                className="p-2 rounded hover:bg-red-500/10 transition-colors text-[var(--text-4)] hover:text-red-500"
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                            </button>
+                        )}
                     </div>
-                )}
 
-                {!isNew && (
-                    <button
-                        onClick={handleToggleArchive}
-                        title={currentNote?.archived ? 'Unarchive' : 'Archive'}
-                        className={`p-2 rounded hover:bg-[var(--bg-muted)] transition-colors ${currentNote?.archived ? 'text-green-500' : 'text-[var(--text-4)] hover:text-[var(--text-2)]'}`}
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" /><line x1="10" y1="12" x2="14" y2="12" /></svg>
-                    </button>
-                )}
+                    {/* Mobile Actions Menu */}
+                    {!isNew && (
+                        <div className="relative sm:hidden">
+                            <button
+                                onClick={() => setShowMobileActions(!showMobileActions)}
+                                className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-2)]"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
+                            </button>
 
-                {!isNew && (
-                    <Link href={`/graph/${noteId}`} title="View Graph" className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-4)] hover:text-[var(--text-2)]">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
-                    </Link>
-                )}
+                            {showMobileActions && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowMobileActions(false)} />
+                                    <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1"
+                                        style={{ animation: 'panelIn 150ms cubic-bezier(.22,1,.36,1)' }}>
 
-                {!isNew && currentNote?.trashed && (
-                    <button
-                        onClick={async () => {
-                            if (!currentNote) return;
-                            await restoreFromTrash(currentNote.id);
-                            router.push('/notes');
-                        }}
-                        title="Restore Note"
-                        className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-4)] hover:text-[var(--text-2)]"
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg>
-                    </button>
-                )}
+                                        <button onClick={() => { handleToggleStar(); setShowMobileActions(false); }}
+                                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] hover:bg-[var(--bg-muted)] transition-colors">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill={currentNote?.starred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className={currentNote?.starred ? 'text-yellow-500' : 'text-[var(--text-4)]'}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                            <span style={{ color: 'var(--text-2)' }}>{currentNote?.starred ? 'Unstar' : 'Star'}</span>
+                                        </button>
 
-                {!isNew && (
-                    <button
-                        onClick={handleDelete}
-                        title={currentNote?.trashed ? "Permanently Delete Note" : "Move to Trash"}
-                        className="p-2 rounded hover:bg-red-500/10 transition-colors text-[var(--text-4)] hover:text-red-500"
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                    </button>
-                )}
+                                        <div className="h-px bg-[var(--border-soft)] mx-2 my-1" />
+
+                                        <div className="px-4 py-2 flex flex-wrap gap-2">
+                                            {availableColors.map(c => (
+                                                <button key={c.name} onClick={() => { setNoteColor(c.value); setColor(currentNote!.id, c.value); setShowMobileActions(false); }}
+                                                    className="w-6 h-6 rounded-full border border-[var(--border-soft)]"
+                                                    style={{ backgroundColor: c.value || 'var(--bg)' }} />
+                                            ))}
+                                        </div>
+
+                                        <div className="h-px bg-[var(--border-soft)] mx-2 my-1" />
+
+                                        <button onClick={() => { handleToggleArchive(); setShowMobileActions(false); }}
+                                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] hover:bg-[var(--bg-muted)] transition-colors">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={currentNote?.archived ? 'text-green-500' : 'text-[var(--text-4)]'}><polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" /><line x1="10" y1="12" x2="14" y2="12" /></svg>
+                                            <span style={{ color: 'var(--text-2)' }}>{currentNote?.archived ? 'Unarchive' : 'Archive'}</span>
+                                        </button>
+
+                                        <Link href={`/graph/${noteId}`} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] hover:bg-[var(--bg-muted)] transition-colors">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--text-4)]"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
+                                            <span style={{ color: 'var(--text-2)' }}>View Graph</span>
+                                        </Link>
+
+                                        <div className="h-px bg-[var(--border-soft)] mx-2 my-1" />
+
+                                        <button onClick={() => { handleDelete(); setShowMobileActions(false); }}
+                                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] hover:bg-red-500/10 text-red-500 transition-colors">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                            <span>{currentNote?.trashed ? 'Delete Forever' : 'Move to Trash'}</span>
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
+
             </div>
 
             {/* ── Title ── */}
