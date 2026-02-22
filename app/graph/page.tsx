@@ -40,10 +40,10 @@ function GraphContent() {
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
                 <div>
-                    <h1 className="font-serif text-[32px] sm:text-[42px] leading-[1.1] font-semibold" style={{ color: 'var(--ink)' }}>
+                    <h1 className="font-serif text-[36px] sm:text-[48px] leading-[1.15] font-semibold tracking-tight" style={{ color: 'var(--ink)' }}>
                         Build a graph
                     </h1>
-                    <p className="text-[14px] mt-2 font-medium" style={{ color: 'var(--ink-dim)' }}>
+                    <p className="text-[15px] mt-3 font-medium opacity-70" style={{ color: 'var(--ink)' }}>
                         Select 2+ notes to visualise cross-note connections
                     </p>
                 </div>
@@ -64,7 +64,7 @@ function GraphContent() {
                 </div>
                 <input type="text" placeholder="Filter notes…" value={query}
                     onChange={e => setQuery(e.target.value)}
-                    className="w-full h-12 bg-white/60 backdrop-blur-sm border border-[var(--border-soft)] rounded-full pl-11 pr-4 text-[14px] font-medium text-[var(--ink)] placeholder-[var(--ink-light)] outline-none focus:border-[var(--ink-dim)] transition-colors shadow-sm" />
+                    className="w-full h-12 bg-white/60 backdrop-blur-xl border border-white/50 rounded-[var(--radius-pill)] pl-11 pr-4 text-[14px] font-medium text-[var(--ink)] placeholder-[var(--ink-dim)] outline-none transition-all shadow-[0_4px_16px_rgba(0,0,0,0.03)] focus:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus:border-white/80" />
             </div>
 
             {/* ── Progress bar ── */}

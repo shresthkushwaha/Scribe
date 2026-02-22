@@ -161,7 +161,7 @@ export default function NoteEditorPage() {
                 <div className="sticky top-0 z-40 -mx-6 px-6 sm:-mx-8 sm:px-8 py-4 flex items-center gap-3 mb-8 bg-white/40 backdrop-blur-xl border-b border-[var(--border-soft)] rounded-t-[calc(var(--radius-xl)-1px)]">
 
                     <button onClick={() => router.push('/notes')}
-                        className="flex items-center gap-1.5 text-[14px] font-medium transition-colors mr-1 text-[var(--ink-dim)] hover:text-[var(--ink)]">
+                        className="flex items-center gap-1.5 text-[14px] font-medium transition-colors mr-1 text-[var(--ink)] opacity-60 hover:opacity-100">
                         <ArrowLeft size={16} weight="bold" />
                         Notes
                     </button>
@@ -192,7 +192,7 @@ export default function NoteEditorPage() {
                                 <button
                                     onClick={handleToggleStar}
                                     title={currentNote?.starred ? 'Unstar' : 'Star'}
-                                    className={`p-2.5 rounded-full transition-colors ${currentNote?.starred ? 'text-yellow-500 bg-yellow-50 font-bold hover:bg-yellow-100' : 'text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/50'}`}
+                                    className={`p-2.5 rounded-full transition-colors ${currentNote?.starred ? 'text-yellow-500 bg-yellow-50 font-bold hover:bg-yellow-100' : 'text-[var(--ink)] opacity-50 hover:opacity-100 hover:bg-white/50'}`}
                                 >
                                     <Star size={20} weight={currentNote?.starred ? "fill" : "regular"} />
                                 </button>
@@ -203,7 +203,7 @@ export default function NoteEditorPage() {
                                     <button
                                         onClick={() => setShowColorPicker(!showColorPicker)}
                                         title="Background Color"
-                                        className="p-2.5 rounded-full transition-colors text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/50"
+                                        className="p-2.5 rounded-full transition-colors text-[var(--ink)] opacity-50 hover:opacity-100 hover:bg-white/50"
                                     >
                                         <Palette size={20} weight="regular" />
                                     </button>
@@ -236,14 +236,14 @@ export default function NoteEditorPage() {
                                 <button
                                     onClick={handleToggleArchive}
                                     title={currentNote?.archived ? 'Unarchive' : 'Archive'}
-                                    className={`p-2.5 rounded-full transition-colors ${currentNote?.archived ? 'text-[var(--ink)] bg-[var(--bg-muted)] font-bold' : 'text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/50'}`}
+                                    className={`p-2.5 rounded-full transition-colors ${currentNote?.archived ? 'text-[var(--ink)] bg-[var(--bg-muted)] font-bold' : 'text-[var(--ink)] opacity-50 hover:opacity-100 hover:bg-white/50'}`}
                                 >
                                     <Archive size={20} weight={currentNote?.archived ? "fill" : "regular"} />
                                 </button>
                             )}
 
                             {!isNew && (
-                                <Link href={`/graph/${noteId}`} title="View Graph" className="p-2.5 rounded-full transition-colors text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/50">
+                                <Link href={`/graph/${noteId}`} title="View Graph" className="p-2.5 rounded-full transition-colors text-[var(--ink)] opacity-50 hover:opacity-100 hover:bg-white/50">
                                     <TreeStructure size={20} weight="regular" />
                                 </Link>
                             )}
@@ -327,7 +327,7 @@ export default function NoteEditorPage() {
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     placeholder="Note title"
-                    className="w-full font-serif text-[32px] sm:text-[46px] leading-[1.1] font-semibold bg-transparent border-none outline-none mb-4 placeholder-[var(--ink-light)]"
+                    className="w-full font-serif text-[36px] sm:text-[48px] leading-[1.15] font-semibold bg-transparent border-none outline-none mb-8 placeholder-[var(--ink-light)]"
                     style={{ color: 'var(--ink)' }}
                 />
 

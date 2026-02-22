@@ -143,13 +143,13 @@ export default function HomePage() {
                     <div className="max-w-7xl mx-auto w-full px-6 md:px-8 lg:px-12 pt-6 md:pt-8 lg:pt-10 mb-2">
                         <header className="flex flex-col md:flex-row md:items-start mt-2 justify-between gap-6 mb-12 relative w-full">
                             <div className="flex-1 shrink-0">
-                                <h1 className="text-[28px] font-semibold tracking-tight" style={{ color: 'var(--ink)' }}>
+                                <h1 className="text-[32px] md:text-[40px] font-serif font-semibold tracking-tight" style={{ color: 'var(--ink)' }}>
                                     Hola there
                                 </h1>
                             </div>
 
                             <div className="flex-1 flex justify-center w-full min-w-0 max-w-2xl mx-auto">
-                                <div className="relative w-full shadow-[0_2px_6px_rgba(0,0,0,0.02)] rounded-[var(--radius-pill)] flex items-center bg-[var(--bg-card)] border border-[var(--border-soft)] transition-all focus-within:shadow-[0_4px_12px_rgba(0,0,0,0.05)] focus-within:border-[rgba(0,0,0,0.1)]">
+                                <div className="relative w-full shadow-[0_4px_16px_rgba(0,0,0,0.03)] rounded-[var(--radius-pill)] flex items-center bg-white/60 backdrop-blur-xl border border-white/50 transition-all focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-within:border-white/80">
                                     <div className="pl-4 text-[var(--ink-dim)]">
                                         <MagnifyingGlass size={16} weight="bold" />
                                     </div>
