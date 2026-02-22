@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { useNotesStore } from '@/lib/notesStore';
-import React, { Suspense } from 'react';
+import { MagnifyingGlass, Check, CircleNotch, TreeStructure } from '@phosphor-icons/react';
 
 function fmt(ts: number) {
     return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -11,7 +11,6 @@ function fmt(ts: number) {
 
 function GraphContent() {
     const { notes, loaded, load } = useNotesStore();
-    const { id } = useParams<{ id: string }>();
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -36,58 +35,55 @@ function GraphContent() {
     const canOpen = selected.size >= 2;
 
     return (
-        <main className="max-w-3xl mx-auto px-5 pb-20 pt-8">
+        <main className="max-w-3xl mx-auto px-5 pb-20 pt-8 sm:pt-12">
 
             {/* ── Header ── */}
-            <div className="flex items-end justify-between mb-6 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
                 <div>
-                    <h1 className="font-serif text-[32px] leading-tight" style={{ color: 'var(--text-1)' }}>
+                    <h1 className="font-serif text-[32px] sm:text-[42px] leading-[1.1] font-semibold" style={{ color: 'var(--ink)' }}>
                         Build a graph
                     </h1>
-                    <p className="text-[13px] mt-0.5" style={{ color: 'var(--text-3)' }}>
+                    <p className="text-[14px] mt-2 font-medium" style={{ color: 'var(--ink-dim)' }}>
                         Select 2+ notes to visualise cross-note connections
                     </p>
                 </div>
                 <button onClick={() => router.push(`/graph/multi?ids=${[...selected].join(',')}`)}
                     disabled={!canOpen}
-                    className="flex-shrink-0 px-4 py-2.5 rounded-lg text-[13px] font-medium transition-all"
+                    className="flex-shrink-0 px-6 py-3 rounded-full text-[14px] font-bold transition-all shadow-sm"
                     style={canOpen
-                        ? { background: 'var(--text-1)', color: 'var(--bg)' }
-                        : { background: 'var(--bg-muted)', color: 'var(--text-4)', cursor: 'not-allowed' }}>
+                        ? { background: 'var(--ink)', color: 'white' }
+                        : { background: 'var(--border-soft)', color: 'var(--ink-dim)', cursor: 'not-allowed', opacity: 0.7 }}>
                     {selected.size > 0 ? `Connect (${selected.size}) →` : 'Connect →'}
                 </button>
             </div>
 
             {/* ── Search ── */}
-            <div className="relative mb-5">
-                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                    width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                    style={{ color: 'var(--text-4)' }}>
-                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
+            <div className="relative mb-6">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--ink-dim)]">
+                    <MagnifyingGlass size={18} weight="bold" />
+                </div>
                 <input type="text" placeholder="Filter notes…" value={query}
                     onChange={e => setQuery(e.target.value)}
-                    className="input-base" style={{ paddingLeft: '2.5rem' }} />
+                    className="w-full h-12 bg-white/60 backdrop-blur-sm border border-[var(--border-soft)] rounded-full pl-11 pr-4 text-[14px] font-medium text-[var(--ink)] placeholder-[var(--ink-light)] outline-none focus:border-[var(--ink-dim)] transition-colors shadow-sm" />
             </div>
 
             {/* ── Progress bar ── */}
             {selected.size > 0 && (
-                <div className="mb-5 px-0.5">
-                    <div className="flex justify-between mb-1.5">
-                        <span className="text-[11px]" style={{ color: 'var(--text-3)' }}>
+                <div className="mb-6 px-1">
+                    <div className="flex justify-between mb-2">
+                        <span className="text-[12px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-dim)' }}>
                             {selected.size} selected
                         </span>
                         {!canOpen && (
-                            <span className="text-[11px]" style={{ color: 'var(--text-4)' }}>
+                            <span className="text-[12px] font-semibold tracking-wide uppercase" style={{ color: 'var(--ink-light)' }}>
                                 Select {2 - selected.size} more
                             </span>
                         )}
                     </div>
-                    <div className="h-[2px] rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
-                        <div className="h-full rounded-full transition-all duration-300"
+                    <div className="h-1.5 rounded-full overflow-hidden bg-[var(--border-soft)]">
+                        <div className="h-full rounded-full transition-all duration-300 bg-[var(--ink)]"
                             style={{
                                 width: `${Math.min(100, (selected.size / Math.max(2, notes.length)) * 100 + 8)}%`,
-                                background: 'var(--accent-green)',
                             }} />
                     </div>
                 </div>
@@ -96,55 +92,62 @@ function GraphContent() {
             {/* ── Notes ── */}
             {!loaded ? (
                 <div className="flex justify-center py-24">
-                    <div className="w-5 h-5 rounded-full border-2 animate-spin"
-                        style={{ borderColor: 'var(--border)', borderTopColor: 'var(--text-2)' }} />
+                    <CircleNotch size={24} className="animate-spin text-[var(--ink)] opacity-50" />
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="card p-12 text-center">
-                    <p style={{ color: 'var(--text-3)' }}>No notes found.</p>
+                <div className="bg-white border border-[var(--border-soft)] rounded-[var(--radius-lg)] p-12 text-center shadow-sm">
+                    <p className="text-[15px] font-medium" style={{ color: 'var(--ink-dim)' }}>No notes found.</p>
                 </div>
             ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {filtered.map(note => {
                         const sel = selected.has(note.id);
-                        const excerpt = note.body.replace(/#{1,6}\s/g, '').replace(/[*_`\[\]]/g, '').slice(0, 80);
+                        const excerpt = note.body.replace(/#{1,6}\s/g, '').replace(/[*_\`\[\]]/g, '').slice(0, 100);
+                        const pastelBg = note.color || 'var(--bg-card)';
+
                         return (
                             <button key={note.id} onClick={() => toggle(note.id)}
-                                className="card flex items-center gap-3.5 px-5 py-3.5 w-full text-left transition-all"
-                                style={sel ? { borderColor: 'var(--text-3)', background: 'var(--bg-muted)' } : {}}>
+                                className={`flex items-start gap-4 px-5 py-4 w-full text-left transition-all border rounded-[var(--radius-lg)] shadow-sm hover:shadow-md ${sel ? 'border-[var(--ink)] scale-[1.01]' : 'border-[var(--border-soft)] hover:border-[var(--ink-dim)]'}`}
+                                style={{
+                                    background: sel ? 'var(--bg-page)' : pastelBg, // When selected, use neutral page bg
+                                }}>
                                 {/* Check */}
-                                <div className="w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-all"
-                                    style={{
-                                        borderColor: sel ? 'var(--text-1)' : 'var(--border)',
-                                        background: sel ? 'var(--text-1)' : 'transparent',
-                                    }}>
-                                    {sel && (
-                                        <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
-                                            <path d="M2 5l2.5 2.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                                        </svg>
-                                    )}
+                                <div className={`w-5 h-5 rounded-[4px] border flex-shrink-0 flex items-center justify-center transition-all mt-0.5 ${sel ? 'border-[var(--ink)] bg-[var(--ink)] text-white' : 'border-[var(--border-soft)] bg-white shadow-sm'}`}>
+                                    {sel && <Check size={12} weight="bold" />}
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-baseline justify-between gap-2">
-                                        <p className="font-serif text-[15px] truncate" style={{ color: 'var(--text-1)' }}>
-                                            {note.title || <span style={{ color: 'var(--text-4)', fontStyle: 'italic' }}>Untitled</span>}
+                                    <div className="flex items-baseline justify-between gap-3 mb-1">
+                                        <p className="font-serif text-[18px] truncate font-semibold" style={{ color: 'var(--ink)' }}>
+                                            {note.title || <span style={{ color: 'var(--ink-light)', fontStyle: 'italic' }}>Untitled</span>}
                                         </p>
-                                        <span className="flex-shrink-0 text-[11px]" style={{ color: 'var(--text-4)' }}>
+                                        <span className="flex-shrink-0 text-[11px] font-medium" style={{ color: 'var(--ink-dim)' }}>
                                             {fmt(note.updatedAt)}
                                         </span>
                                     </div>
                                     {excerpt && (
-                                        <p className="text-[12px] truncate mt-0.5" style={{ color: 'var(--text-3)' }}>{excerpt}</p>
+                                        <p className="text-[13px] truncate mt-0.5 leading-relaxed" style={{ color: 'var(--ink-dim)' }}>{excerpt}</p>
                                     )}
                                     {note.tags.length > 0 && (
-                                        <div className="flex gap-1 mt-1.5">
-                                            {note.tags.slice(0, 4).map(t => (
-                                                <span key={t} className="tag-pill text-[10px]">#{t}</span>
+                                        <div className="flex flex-wrap gap-1.5 mt-3">
+                                            {note.tags.slice(0, 5).map(t => (
+                                                <span key={t} className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border border-[var(--border-soft)] bg-white/50" style={{ color: 'var(--ink-dim)' }}>{t}</span>
                                             ))}
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Quick Graph Button */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        router.push(`/graph/${note.id}`);
+                                    }}
+                                    title="Open individual graph"
+                                    className="p-2 -mr-2 rounded-full hover:bg-[var(--bg-muted)] text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
+                                >
+                                    <TreeStructure size={20} weight="bold" />
+                                </button>
                             </button>
                         );
                     })}
@@ -157,9 +160,8 @@ function GraphContent() {
 export default function GraphPage() {
     return (
         <Suspense fallback={
-            <div className="fixed inset-0 bg-[var(--bg)] flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full border-2 animate-spin"
-                    style={{ borderColor: 'var(--border)', borderTopColor: 'var(--text-2)' }} />
+            <div className="fixed inset-0 bg-[var(--bg-app)] flex items-center justify-center">
+                <CircleNotch size={32} className="animate-spin text-[var(--ink)] opacity-50" />
             </div>
         }>
             <GraphContent />

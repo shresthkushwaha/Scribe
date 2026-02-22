@@ -4,13 +4,15 @@ import React, {
     useEffect, useRef, useState, useMemo, useCallback,
 } from 'react';
 import * as d3 from 'd3';
-import { Node, Link, LENS_CONFIGS, INSIGHT_COLORS, getClusterPositions } from '@/lib/graphEngine';
+import Link from 'next/link';
+import { ArrowLeft, X, TreeStructure } from '@phosphor-icons/react';
+import { Node, Link as GraphLink, LENS_CONFIGS, INSIGHT_COLORS, getClusterPositions } from '@/lib/graphEngine';
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
     nodes: Node[];
-    links: Link[];
+    links: GraphLink[];
     title?: string;
     backHref?: string;
     isArchipelago?: boolean;
@@ -396,9 +398,7 @@ export default function GraphCanvas({
                         className="graph-back-btn flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] transition-colors mr-1 sm:mr-1 shrink-0"
                         style={{ color: 'var(--text-2)', fontFamily: 'var(--font-inter, sans-serif)' }}
                     >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                            <path d="M19 12H5M12 5l-7 7 7 7" />
-                        </svg>
+                        <ArrowLeft size={14} weight="bold" />
                         Back
                     </NavLink>
                 )}
@@ -686,9 +686,7 @@ export default function GraphCanvas({
                             onClick={() => { setActiveId(null); (activeNode as any).fx = null; (activeNode as any).fy = null; }}
                             className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--text-3)]
                                 hover:text-[var(--text-1)] hover:bg-[var(--bg-muted)] transition-all">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
+                            <X size={14} weight="bold" />
                         </button>
                     </div>
 
@@ -720,15 +718,15 @@ export default function GraphCanvas({
                                     </div>
                                 )}
 
-                                {activeNode.metadata?.noteId && (
+                                {(activeNode as any).metadata?.noteId && (
                                     <div className="mt-4 pt-4 border-t border-[var(--border-soft)]">
                                         <Link
-                                            href={`/graph/${activeNode.metadata.noteId}`}
+                                            href={`/graph/${(activeNode as any).metadata.noteId}`}
                                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
                                                 bg-[var(--text-1)] text-[var(--bg)] font-medium text-[12px]
                                                 hover:opacity-90 transition-all shadow-sm"
                                         >
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
+                                            <TreeStructure size={16} weight="bold" />
                                             Open Note Graph
                                         </Link>
                                     </div>

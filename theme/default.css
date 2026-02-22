@@ -1,0 +1,51 @@
+:root {
+    --ref-gradient-top: #F0D5D5;
+    --ref-gradient-bot: #CBCBE8;
+
+    --ink: #3E3838;
+    --ink-dim: rgba(62, 56, 56, 0.5);
+    --ink-light: rgba(62, 56, 56, 0.25);
+
+    --bg-sage: #D8E6DE;
+    --bg-rose: #EFD9D9;
+    --bg-peach: #F4E4D4;
+    --bg-sky: #DAE6ED;
+    --bg-lavender: #DCDCF0;
+
+    --bg-app: #FAFAFA;
+    --bg-card: #FFFFFF;
+    --bg-muted: rgba(62, 56, 56, 0.04);
+    --bg-hover: rgba(62, 56, 56, 0.08);
+
+    --border: rgba(0, 0, 0, 0.08);
+    --border-soft: rgba(0, 0, 0, 0.04);
+
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --radius-pill: 99px;
+
+    --space-xs: 8px;
+    --space-s: 16px;
+    --space-m: 24px;
+    --space-l: 32px;
+    --space-xl: 48px;
+
+    --shadow-md: 0 12px 24px -10px rgba(62, 56, 56, 0.1);
+
+    /* Aliases for legacy tokens to avoid breaking D3 renderers */
+    --text-1: var(--ink);
+    --text-2: var(--ink);
+    --text-3: var(--ink-dim);
+    --text-4: var(--ink-light);
+    --bg: var(--bg-app);
+    --border: var(--border-soft);
+    --accent-green: #34835a;
+    --accent-amber: #b87333;
+    --accent-blue: #3460a0;
+    --accent-orange: #d97706;
+    --accent-orange-bg: #fffbeb;
+    --accent-red: #dc2626;
+    --accent-red-bg: #fef2f2;
+}

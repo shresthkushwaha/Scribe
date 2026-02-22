@@ -45,8 +45,8 @@ export type Link = {
 // -----------------------------------------------------------------------------
 
 export const LENS_CONFIGS: Record<string, any> = {
-    analyst: { label: '🔍 The Analyst', friction: 0.85, charge: -30, gravity: 0.01, collision: 1, linkDist: 100 },
-    weaver: { label: '🔮 The Weaver', friction: 0.85, charge: -30, gravity: 0, collision: 1, linkDist: 100 },
+    analyst: { label: 'The Analyst', friction: 0.85, charge: -30, gravity: 0.01, collision: 1, linkDist: 100 },
+    weaver: { label: 'The Weaver', friction: 0.85, charge: -30, gravity: 0, collision: 1, linkDist: 100 },
 };
 
 export const INSIGHT_COLORS = [

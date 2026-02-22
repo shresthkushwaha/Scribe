@@ -1,7 +1,10 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+
+import { House, FileText, TreeStructure, Plus } from '@phosphor-icons/react';
 
 export function MobileNav() {
     const pathname = usePathname();
@@ -9,31 +12,32 @@ export function MobileNav() {
     // Render MobileNav regardless of route so user can always navigate back.
 
     const navItems = [
-        { label: 'Home', href: '/', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
-        { label: 'Library', href: '/notes', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /></svg> },
-        { label: 'Graph', href: '/graph', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg> }
+        { label: 'Home', href: '/', icon: <House size={22} weight="regular" /> },
+        { label: 'Library', href: '/notes', icon: <FileText size={22} weight="regular" /> },
+        { label: 'Graph', href: '/graph', icon: <TreeStructure size={22} weight="regular" /> }
     ];
 
     return (
-        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 flex items-center justify-between px-6 py-3 rounded-full shadow-lg border"
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 flex items-center justify-between px-6 py-3 rounded-full shadow-[0_4px_24px_rgba(62,56,56,0.15)] border"
             style={{
-                background: 'rgba(245,243,238,0.92)',
-                backdropFilter: 'blur(16px)',
-                borderColor: 'var(--border)',
+                background: 'rgba(255,255,255,0.85)',
+                backdropFilter: 'blur(12px)',
+                borderColor: 'var(--border-soft)',
             }}>
             {navItems.map((item) => {
                 const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                const activeIcon = React.cloneElement(item.icon, { weight: active ? "fill" : "regular" });
                 return (
                     <Link key={item.label} href={item.href}
-                        className={`flex flex-col items-center gap-1 transition-colors ${active ? 'text-[var(--text-1)]' : 'text-[var(--text-3)]'}`}>
-                        {item.icon}
-                        <span className="text-[10px] font-medium">{item.label}</span>
+                        className={`flex flex-col items-center gap-1 transition-colors ${active ? 'text-[var(--ink)]' : 'text-[var(--ink-dim)] hover:text-[var(--ink)]'}`}>
+                        {activeIcon}
+                        <span className="text-[10px] font-semibold">{item.label}</span>
                     </Link>
                 );
             })}
-            <Link href="/notes/new" className="flex items-center justify-center w-10 h-10 rounded-full shadow-md text-white transition-transform active:scale-95"
-                style={{ background: 'var(--text-1)' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            <Link href="/notes/new" className="flex items-center justify-center w-11 h-11 rounded-full shadow-[0_4px_12px_rgba(62,56,56,0.2)] text-white transition-transform active:scale-95 ml-2"
+                style={{ background: 'var(--ink)' }}>
+                <Plus size={20} weight="bold" />
             </Link>
         </div>
     );
