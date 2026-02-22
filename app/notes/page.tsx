@@ -87,13 +87,13 @@ function NotesContent() {
     if (filterParam === 'trash') pageTitle = 'Trash';
 
     return (
-        <div className="flex h-full w-full overflow-hidden">
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        <div className="flex h-full w-full gap-4 md:gap-5 lg:gap-6 overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white rounded-none md:rounded-[32px] shadow-none md:shadow-[0_4px_32px_rgba(0,0,0,0.02)] border-none md:border border-[rgba(0,0,0,0.03)]">
                 {/* Fixed Header & Navigation Section */}
-                <div className="z-20 bg-[var(--bg-app)] w-full">
+                <div className="z-20 bg-white w-full rounded-t-none md:rounded-t-[32px]">
                     <div className="max-w-7xl mx-auto w-full px-6 md:px-8 lg:px-12 pt-6 md:pt-8 lg:pt-10 mb-2">
                         {/* Header */}
-                        <header className="flex flex-col md:flex-row md:items-start md:mt-1 justify-between gap-6 mb-10 relative w-full">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative w-full mb-8">
                             <div className="flex-1 shrink-0">
                                 <h1 className="text-[32px] md:text-[40px] font-serif font-semibold tracking-tight leading-tight flex items-center gap-3" style={{ color: 'var(--ink)' }}>
                                     {filterParam === 'starred' && <Star size={32} weight="fill" color="#eab308" />}
@@ -108,25 +108,17 @@ function NotesContent() {
                                 )}
                             </div>
 
-                            {/* Centered Search */}
-                            <div className="flex-1 flex justify-center w-full min-w-0 max-w-2xl mx-auto">
-                                <div className="relative w-full shadow-[0_4px_16px_rgba(0,0,0,0.03)] rounded-[var(--radius-pill)] flex items-center bg-white/60 backdrop-blur-xl border border-white/50 transition-all focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-within:border-white/80">
-                                    <div className="pl-4 text-[var(--ink-dim)]">
-                                        <MagnifyingGlass size={16} weight="bold" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        placeholder="Search notes..."
-                                        value={query}
-                                        onChange={(e) => setQuery(e.target.value)}
-                                        className="w-full h-11 bg-transparent outline-none px-3 text-[14px] placeholder-[var(--ink-dim)] text-[var(--ink)] rounded-[var(--radius-pill)]"
-                                    />
-                                </div>
+                            <div className="w-full md:w-[320px] shrink-0 relative group">
+                                <MagnifyingGlass size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ink-dim)] z-10" />
+                                <input
+                                    type="text"
+                                    placeholder="Search notes..."
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    className="w-full h-11 bg-white/60 backdrop-blur-xl border border-white/50 outline-none pl-11 pr-4 text-[14px] placeholder-[var(--ink-dim)] text-[var(--ink)] rounded-[var(--radius-pill)] transition-all focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-within:border-[var(--border-soft)]"
+                                />
                             </div>
-
-                            {/* Right Space (Balanced) */}
-                            <div className="flex-1 hidden md:flex justify-end shrink-0" />
-                        </header>
+                        </div>
 
                         {/* Filters (Tags & System) - Mobile Responsive Scroll */}
                         <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 pb-2 -mx-6 px-6 md:mx-0 md:px-0 md:flex-wrap">
@@ -196,7 +188,7 @@ function NotesContent() {
                                 )}
                             </div>
                         ) : (
-                            <div className="grid gap-6 pb-24" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                            <div className="grid gap-6 pb-24 -mx-6 -mt-6 px-6 pt-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                                 {filtered.map((note: Note, index: number) => {
                                     const excerpt = note.body.replace(/#{1,6}\s/g, '').replace(/[*_`\[\]]/g, '').slice(0, 150) + '...';
                                     const isSelected = selectedIds.has(note.id);
@@ -212,7 +204,7 @@ function NotesContent() {
                                                     router.push(`/notes/${note.id}`);
                                                 }
                                             }}
-                                            className={`group relative flex flex-col p-[var(--space-m)] bg-[var(--bg-card)] rounded-[var(--radius-lg)] cursor-pointer transition-all hover:shadow-[0_12px_24px_-10px_rgba(62,56,56,0.1)] hover:-translate-y-1 ${isSelected ? 'ring-2 ring-[var(--ink)] ring-offset-2 ring-offset-[var(--bg-app)]' : 'border border-transparent'}`}
+                                            className={`group relative flex flex-col p-[var(--space-m)] bg-[var(--bg-card)] rounded-[var(--radius-lg)] cursor-pointer transition-all hover:shadow-[0_12px_24px_-10px_rgba(62,56,56,0.1)] hover:-translate-y-1 hover:z-20 ${isSelected ? 'ring-2 ring-[var(--ink)] ring-offset-2 ring-offset-[var(--bg-app)]' : 'border border-transparent'}`}
                                             style={{
                                                 backgroundColor: cardBg,
                                                 minHeight: '220px'

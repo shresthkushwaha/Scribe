@@ -4,6 +4,7 @@ import React, { useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useNotesStore } from '@/lib/notesStore';
+import { DataMigration } from './DataMigration';
 import { FileText, Star, Archive, Trash, Plus, Hash, CaretLeft, CaretRight } from '@phosphor-icons/react';
 
 function SidebarContent() {
@@ -31,10 +32,9 @@ function SidebarContent() {
 
     return (
         <aside
-            className={`hidden md:flex flex-col border-r h-screen transition-all duration-300 flex-shrink-0 z-40 bg-white/50 backdrop-blur-md relative`}
+            className={`hidden md:flex flex-col h-full transition-all duration-300 flex-shrink-0 z-40 relative`}
             style={{
                 width: isCollapsed ? '80px' : '260px',
-                borderColor: 'var(--border-soft)',
                 padding: isCollapsed ? 'var(--space-l) var(--space-xs)' : 'var(--space-l) var(--space-m)'
             }}
         >
@@ -108,6 +108,7 @@ function SidebarContent() {
                         </Link>
                     )}
                 </div>
+                <DataMigration isCollapsed={isCollapsed} />
             </div>
 
             <div className="mt-auto pt-6">
@@ -127,7 +128,7 @@ function SidebarContent() {
 
 export function Sidebar() {
     return (
-        <Suspense fallback={<aside className="hidden md:flex flex-col border-r h-screen w-[260px] bg-white/50" />}>
+        <Suspense fallback={<aside className="hidden md:flex flex-col h-screen w-[260px]" />}>
             <SidebarContent />
         </Suspense>
     );
