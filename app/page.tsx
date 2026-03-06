@@ -7,6 +7,7 @@ import { useNotesStore } from '@/lib/notesStore';
 import type { Note } from '@/lib/notesStore';
 import { MagnifyingGlass, Plus, Star, ClockCounterClockwise, TreeStructure, Check } from '@phosphor-icons/react';
 import { GraphBuilder } from '@/components/GraphBuilder';
+import { MobileSettingsIcon } from '@/components/MobileSettingsIcon';
 
 function timeAgo(ts: number) {
     const min = Math.floor((Date.now() - ts) / 60000);
@@ -74,7 +75,7 @@ export default function HomePage() {
             >
                 {/* Interactive Checkbox Layer */}
                 <div
-                    className={`no-route absolute top-4 right-4 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all z-10 ${isSelected ? 'bg-[var(--ink)] border-[var(--ink)] text-white' : 'bg-white/40 backdrop-blur-sm border-white/60 text-transparent opacity-0 group-hover:opacity-100 hover:border-white'}`}
+                    className={`no-route absolute top-4 right-4 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all z-10 ${isSelected ? 'bg-(--ink) border-(--ink) text-(--bg-card)' : 'bg-(--bg-card)/40 backdrop-blur-sm border-(--border-soft) text-transparent opacity-0 group-hover:opacity-100 hover:border-(--ink-dim)'}`}
                     onClick={(e) => toggleSelection(note.id, e)}
                 >
                     <Check size={14} weight="bold" className={isSelected ? 'opacity-100' : 'opacity-0'} />
@@ -95,9 +96,9 @@ export default function HomePage() {
                 </p>
 
                 <div className="flex items-center justify-between mt-auto pt-4">
-                    <span className="truncate min-w-0 px-2.5 py-1 rounded-full text-[12px] font-semibold tracking-wide bg-white/40 backdrop-blur-sm text-[var(--ink)]">
-                        {primaryTag}
-                    </span>
+                    <button className="px-6 py-3 rounded-full text-[14px] font-bold bg-(--ink) text-(--bg-card) transition-all shadow-sm hover:translate-x-1">
+                        Connect →
+                    </button>
                     <span className="shrink-0 whitespace-nowrap ml-2 text-[12px] font-medium text-[var(--ink-dim)]">
                         {timeAgo(note.updatedAt)}
                     </span>
@@ -116,9 +117,9 @@ export default function HomePage() {
                     <h2 className="text-[18px] font-semibold tracking-tight" style={{ color: 'var(--ink)' }}>{title}</h2>
                 </div>
                 {items.length === 0 ? (
-                    <div className="grid gap-6 -mx-4 -mt-4 px-4 pt-4 pb-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                    <div className="grid gap-6 pb-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                         <Link href={`/notes/new`}
-                            className="flex flex-col items-center justify-center p-[var(--space-m)] bg-[var(--bg-card)] rounded-[var(--radius-lg)] cursor-pointer transition-all hover:border-[var(--ink-dim)] group"
+                            className="flex flex-col items-center justify-center p-[var(--space-m)] bg-(--bg-card) rounded-[var(--radius-lg)] cursor-pointer transition-all hover:border-(--ink-dim)] group"
                             style={{ border: '2px dashed var(--border)', minHeight: '220px' }}>
                             <div className="flex flex-col items-center gap-3 text-[var(--ink-dim)] group-hover:text-[var(--ink)] transition-colors">
                                 <Plus size={32} weight="regular" />
@@ -127,7 +128,7 @@ export default function HomePage() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid gap-6 -mx-4 -mt-4 px-4 pt-4 pb-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                    <div className="grid gap-6 pb-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                         {items.slice(0, 8).map((n, i) => renderCard(n, i))}
                     </div>
                 )}
@@ -137,19 +138,20 @@ export default function HomePage() {
 
     return (
         <div className="flex h-full w-full gap-4 md:gap-5 lg:gap-6 overflow-hidden">
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white rounded-none md:rounded-[28px] lg:rounded-[32px] shadow-none md:shadow-[0_4px_32px_rgba(0,0,0,0.02)] border-none md:border border-[rgba(0,0,0,0.03)]">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-(--bg-card) rounded-none md:rounded-[28px] lg:rounded-[32px] shadow-none md:shadow-[0_4px_32px_rgba(0,0,0,0.02)] border-none md:border border-(--border-soft)">
                 {/* Fixed Header Section */}
-                <div className="z-20 bg-white w-full rounded-t-none md:rounded-t-[32px]">
+                <div className="z-20 bg-(--bg-card) w-full rounded-t-none md:rounded-t-[32px]">
                     <div className="max-w-7xl mx-auto w-full px-6 md:px-8 lg:px-12 pt-6 md:pt-8 lg:pt-10 mb-2">
                         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative w-full">
-                            <div className="flex-1 shrink-0">
+                            <div className="flex-1 shrink-0 flex items-center justify-between">
                                 <h1 className="text-[32px] md:text-[40px] font-serif font-semibold tracking-tight" style={{ color: 'var(--ink)' }}>
                                     Hola there
                                 </h1>
+                                <MobileSettingsIcon />
                             </div>
 
                             <div className="flex-[2] max-w-xl w-full">
-                                <div className="relative w-full shadow-[0_4px_16px_rgba(0,0,0,0.03)] rounded-[var(--radius-pill)] flex items-center bg-white/60 backdrop-blur-xl border border-[var(--border-soft)] transition-all focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-within:border-[var(--border-soft)]">
+                                <div className="relative w-full shadow-[0_4px_16px_rgba(0,0,0,0.03)] rounded-[var(--radius-pill)] flex items-center bg-(--bg-muted) backdrop-blur-xl border border-(--border-soft) transition-all focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-within:border-(--border-soft)">
                                     <div className="pl-4 text-[var(--ink-dim)]">
                                         <MagnifyingGlass size={16} weight="bold" />
                                     </div>
@@ -158,7 +160,7 @@ export default function HomePage() {
                                         placeholder="Search notes..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        className="w-full h-11 bg-transparent outline-none px-3 text-[14px] placeholder-[var(--ink-dim)] text-[var(--ink)] rounded-[var(--radius-pill)]"
+                                        className="w-full h-11 bg-transparent outline-none px-3 text-[14px] placeholder-(--ink-dim) text-(--ink) rounded-[var(--radius-pill)]"
                                     />
                                 </div>
                             </div>

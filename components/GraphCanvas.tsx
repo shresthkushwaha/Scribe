@@ -388,7 +388,7 @@ export default function GraphCanvas({
             <div
                 className="absolute top-0 left-0 right-0 z-40 sm:h-11 flex flex-wrap sm:flex-nowrap items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-0 min-h-[44px]"
                 style={{
-                    background: 'rgba(245,243,238,0.92)',
+                    background: 'var(--bg-muted)',
                     backdropFilter: 'blur(16px)',
                     borderBottom: '1px solid var(--border-soft)',
                 }}
@@ -449,8 +449,8 @@ export default function GraphCanvas({
                         <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
                     </filter>
                     <radialGradient id="fog" cx="50%" cy="50%" r="55%">
-                        <stop offset="40%" stopColor="#f5f3ee" stopOpacity="0" />
-                        <stop offset="100%" stopColor="#f5f3ee" stopOpacity="0.55" />
+                        <stop offset="40%" stopColor="var(--bg-app)" stopOpacity="0" />
+                        <stop offset="100%" stopColor="var(--bg-app)" stopOpacity="0.55" />
                     </radialGradient>
                 </defs>
 
@@ -483,7 +483,7 @@ export default function GraphCanvas({
                         })();
                         return (
                             <line key={i} className="sc-link"
-                                stroke={hi ? '#1c1917' : 'rgba(28,25,23,0.5)'}
+                                stroke="var(--ink)"
                                 strokeOpacity={
                                     hi ? 0.75
                                         : dim ? 0.04
@@ -644,7 +644,7 @@ export default function GraphCanvas({
                                 transform={`translate(${anchor.fx ?? anchor.x ?? 0},${anchor.fy ?? anchor.y ?? 0})`}
                                 pointerEvents="none">
                                 <rect x={-w / 2} y={-17} width={w} height={34} rx={17}
-                                    fill="#0b0b0b" stroke={color.stroke} strokeWidth={1.5} opacity={0.97} />
+                                    fill="var(--ink)" stroke={color.stroke} strokeWidth={1.5} opacity={0.97} />
                                 <text textAnchor="middle" dominantBaseline="middle"
                                     fontSize={11} fontFamily="monospace" fontWeight="600"
                                     fill={color.dot}>
@@ -709,10 +709,10 @@ export default function GraphCanvas({
                                                 style={{
                                                     width: `${activeNode.resonanceScore}%`,
                                                     background: activeNode.resonanceScore > 60
-                                                        ? '#34835a'
+                                                        ? 'var(--accent-green)'
                                                         : activeNode.resonanceScore > 30
-                                                            ? '#b87333'
-                                                            : '#a0342a',
+                                                            ? 'var(--accent-amber)'
+                                                            : 'var(--accent-red)',
                                                 }} />
                                         </div>
                                     </div>
