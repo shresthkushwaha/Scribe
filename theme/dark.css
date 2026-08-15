@@ -12,6 +12,23 @@
     --bg-sky: #2a343d;
     --bg-lavender: #2d2a3d;
 
+    /* Tactical Noir Tokens */
+    --tactical-bg: #0a0b0d;
+    --tactical-bg-muted: #121417;
+    --tactical-glass: rgba(18, 20, 23, 0.7);
+    --tactical-ink-1: #f2f2f7;
+    --tactical-ink-2: #a1a1aa;
+    --tactical-ink-3: #71717a;
+    --tactical-border: rgba(255, 255, 255, 0.1);
+    --tactical-noise: 0.05;
+
+    /* Swarm Signals (Punchier for Dark) */
+    --swarm-red: #ff453a;
+    --swarm-rose: #ffccd9;
+    --swarm-mint: #32d74b;
+    --swarm-violet: #bf5af2;
+    --swarm-blue: #0a84ff;
+
     --bg-app: #0A0A0A;
     --bg-card: #141414;
     --bg-muted: rgba(255, 255, 255, 0.04);

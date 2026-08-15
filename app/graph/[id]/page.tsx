@@ -3,12 +3,14 @@
 import { useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useNotesStore } from '@/lib/notesStore';
+import { useMapStore } from '@/lib/mapStore';
 import { processJournalData } from '@/lib/graphEngine';
 import GraphCanvas from '@/components/GraphCanvas';
 
 export default function SingleNoteGraphPage() {
     const { id } = useParams<{ id: string }>();
     const { notes, loaded, load } = useNotesStore();
+    const { recordMap } = useMapStore();
 
     useEffect(() => { load(); }, []);
 
@@ -44,6 +46,21 @@ export default function SingleNoteGraphPage() {
         return res;
     }, [note?.body, notes]);
 
+    useEffect(() => {
+        if (!note || !id) return;
+        recordMap({
+            id: `note-${id}`,
+            title: note.title ? `${note.title}` : 'Untitled Graph',
+            type: 'individual',
+            noteIds: [id],
+            noteTitles: [note.title || 'Untitled'],
+            nodeCount: nodes.length,
+            linkCount: links.length,
+            previewExcerpt: note.body?.slice(0, 140) || '',
+            href: `/graph/${id}`,
+        });
+    }, [id, note?.title, note?.body, nodes.length, links.length, recordMap]);
+
     if (!loaded) {
         return (
             <div className="fixed inset-0 bg-[#080808] flex items-center justify-center">
@@ -58,6 +75,8 @@ export default function SingleNoteGraphPage() {
             links={links}
             title={note?.title || 'Untitled'}
             backHref={`/notes/${id}`}
+            sourceContent={note ? `Title: ${note.title}\nContent: ${note.body}` : ""}
+            noteId={id}
         />
     );
 }

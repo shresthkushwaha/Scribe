@@ -1,12 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNotesStore } from '@/lib/notesStore';
 import { DataMigration } from '@/components/DataMigration';
-import { Sun, Moon, Database, Palette, GearSix } from '@phosphor-icons/react';
+import { Sun, Moon, Database, Palette, GearSix, Key, Sparkle, ArrowRight, ShieldCheck, CheckCircle } from '@phosphor-icons/react';
+import BYOKModal from '@/components/BYOKModal';
+import { useBYOKStore } from '@/lib/byokStore';
 
 export default function SettingsPage() {
     const { theme, setTheme } = useNotesStore();
+    const { config, load: loadBYOK } = useBYOKStore();
+    const [isBYOKOpen, setIsBYOKOpen] = useState(false);
+
+    useEffect(() => {
+        loadBYOK();
+    }, [loadBYOK]);
+
+    const activeKey = config.keys.find(k => k.id === config.activeKeyId);
 
     const toggleTheme = () => {
         setTheme(theme === 'light' ? 'dark' : 'light');
@@ -22,14 +32,56 @@ export default function SettingsPage() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-serif font-semibold text-(--ink)">Settings</h1>
-                        <p className="text-sm text-(--ink-dim)">Manage your preferences and data</p>
+                        <p className="text-sm text-(--ink-dim)">Manage your preferences, API keys, and data</p>
                     </div>
                 </div>
             </header>
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto no-scrollbar">
-                <div className="max-w-4xl mx-auto w-full px-8 py-10 flex flex-col gap-12 pb-32">
+                <div className="max-w-4xl mx-auto w-full px-8 py-10 flex flex-col gap-10 pb-32">
+
+                    {/* AI & BYOK Section */}
+                    <section className="flex flex-col gap-4">
+                        <div className="flex items-center gap-2 pb-2 border-b border-(--border-soft)">
+                            <Key size={20} weight="bold" className="text-(--ink-dim)" />
+                            <h2 className="text-sm uppercase tracking-wider font-bold text-(--ink-dim)">AI Credentials & BYOK</h2>
+                        </div>
+
+                        <div className="p-6 rounded-2xl bg-(--bg-card) border border-(--border-soft) shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                            <div className="flex flex-col gap-1.5 max-w-lg">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-semibold text-(--ink)">
+                                        Bring Your Own Key (BYOK)
+                                    </h3>
+                                    {activeKey ? (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                                            <CheckCircle size={12} weight="fill" />
+                                            Active
+                                        </span>
+                                    ) : (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                                            Default Gemini
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-sm text-(--ink-dim) leading-relaxed">
+                                    {activeKey 
+                                        ? `Currently powered by ${activeKey.name} (${activeKey.preferredModel}). All in-graph chat and spatial mapping requests will use this credential.`
+                                        : 'Connect your own Google Gemini, Anthropic Claude, OpenAI, DeepSeek, or local Ollama / LM Studio models.'}
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => setIsBYOKOpen(true)}
+                                className="px-5 py-2.5 rounded-full text-sm font-bold bg-(--ink) text-(--bg-card) hover:opacity-90 transition-all flex items-center gap-2 shrink-0 self-start sm:self-center shadow-sm"
+                            >
+                                <Key size={16} weight="bold" />
+                                <span>{activeKey ? 'Manage Keys' : 'Configure BYOK'}</span>
+                                <ArrowRight size={14} weight="bold" />
+                            </button>
+                        </div>
+                    </section>
 
                     {/* Appearance Section */}
                     <section className="flex flex-col gap-6">
@@ -81,6 +133,11 @@ export default function SettingsPage() {
 
                 </div>
             </div>
+
+            <BYOKModal 
+                isOpen={isBYOKOpen} 
+                onClose={() => setIsBYOKOpen(false)} 
+            />
         </div>
     );
 }

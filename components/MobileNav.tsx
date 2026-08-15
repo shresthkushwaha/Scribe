@@ -8,8 +8,19 @@ import { House, FileText, TreeStructure, Plus, GearSix } from '@phosphor-icons/r
 
 export function MobileNav() {
     const pathname = usePathname();
+    const [hasVisited, setHasVisited] = React.useState<boolean | null>(null);
 
-    // Render MobileNav regardless of route so user can always navigate back.
+    React.useEffect(() => {
+        try {
+            setHasVisited(!!localStorage.getItem('scribe_visited'));
+        } catch {
+            setHasVisited(true);
+        }
+    }, [pathname]);
+
+    if (pathname === '/landing' || (pathname === '/' && hasVisited === false) || pathname === '/graph/multi' || pathname === '/graph/v2' || (pathname.startsWith('/graph/') && pathname !== '/graph')) {
+        return null;
+    }
 
     const navItems = [
         { label: 'Home', href: '/', icon: <House size={22} weight="regular" /> },

@@ -5,7 +5,9 @@
 // Types
 // -----------------------------------------------------------------------------
 
-export type NodeType = 'SENTENCE' | 'ENTITY' | 'TRAIT' | 'ANCHOR';
+export type NodeType = 'SENTENCE' | 'ENTITY' | 'TRAIT' | 'ANCHOR' | 'PERSONA' | 'EPICENTER'
+    | 'STRAT_CRITIQUE' | 'STRAT_INSIGHT' | 'STRAT_FACT' | 'STRAT_OPPORTUNITY'
+    | 'STRAT_RISK' | 'STRAT_PATH' | 'STRAT_QUESTION' | 'SECTION_GROUP';
 
 export type Node = {
     id: string;
@@ -19,6 +21,8 @@ export type Node = {
     fx?: number | null;
     fy?: number | null;
     r: number;
+    data?: any;
+    [key: string]: any;
     width?: number;
     height?: number;
     index?: number;
@@ -31,13 +35,21 @@ export type Node = {
     baseValue?: number;
     multiplier?: number;
     lastCalculated?: number;
+    summary?: string;
+    source_snippet?: string;
+    pkgId?: string; // For Swamp Mode icons
+    critique?: string; // For Swamp Mode details
+    category?: string; // For Strategist categorization
+    color?: string; // Dynamic HSL/Hex for Giga Map pillars
+    parentId?: string; // For React Flow parent-child hierarchy
 };
 
 export type Link = {
     source: string | Node;
     target: string | Node;
     value: number;
-    type: 'CONTAINS' | 'DESCRIBES';
+    type: 'CONTAINS' | 'DESCRIBES' | 'GAP_LINK' | 'SYNTHESIS' | 'STRAT_LINK' | 'STRAT_LINK_SUBTLE';
+    color?: string; // Chromatic strand color
 };
 
 // -----------------------------------------------------------------------------
@@ -45,8 +57,29 @@ export type Link = {
 // -----------------------------------------------------------------------------
 
 export const LENS_CONFIGS: Record<string, any> = {
-    analyst: { label: 'The Analyst', friction: 0.85, charge: -30, gravity: 0.01, collision: 1, linkDist: 100 },
-    weaver: { label: 'The Weaver', friction: 0.85, charge: -30, gravity: 0, collision: 1, linkDist: 100 },
+    strategist: { label: 'The Strategist', friction: 0.85, charge: -30, gravity: 0, collision: 1, linkDist: 100 },
+    oracle: { label: 'The Oracle', friction: 0.4, charge: -120, gravity: 0.015, collision: 2, linkDist: 160 },
+};
+
+export const AI_LENS_CONFIGS: Record<string, any> = {
+    oracle: { 
+        label: 'Oracle Spatial', 
+        id: 'oracle',
+        description: 'Structured topographic synthesis of conceptual relationships and strategic flow.',
+        systemPrompt: `Focus on discovering the latent conceptual skeleton of the notes. Identify thematic anchors that represent the "gravity centers" of the discussion, then populate them with concrete evidence nodes.`
+    },
+    swamp: {
+        label: 'Swamp Mode',
+        id: 'swamp',
+        description: 'High-fidelity social stress-test with 30 AI personas.',
+        systemPrompt: 'TRANSFORM: STRESS-TEST'
+    },
+    strategist: {
+        label: 'Strategist',
+        id: 'strategist',
+        description: 'Proactive decision cockpit and trajectory architect.',
+        systemPrompt: 'TRANSFORM: ORCHESTRATE'
+    }
 };
 
 export const INSIGHT_COLORS = [
@@ -74,7 +107,7 @@ const IS_ADJ = (w: string) =>
         'stiff', 'stark', 'frozen', 'rosy', 'smiling', 'anxious', 'calm', 'tired', 'energetic',
     ].includes(w);
 
-const PROJECTS = ['oatsen', 'deck', 'sanctuary', 'scribe', 'focus', 'aura'];
+const PROJECTS = ['oracle', 'deck', 'sanctuary', 'scribe', 'focus', 'aura'];
 const INTENSE_WORDS = ['love', 'hate', 'great', 'amazing', 'terrible', 'awful', 'perfect', 'critical', 'urgent', 'huge', 'best', 'worst'];
 
 // -----------------------------------------------------------------------------
@@ -320,4 +353,229 @@ export function buildArchipelagoGraph(notes: { id: string; title: string; body: 
     });
 
     return { nodes: [...filteredNodes, ...anchorNodes], links: filteredLinks.map(l => ({ ...l })) };
+}
+
+/**
+ * Converts Gemini's GraphData (nodes/edges) into V1 Engine format (Nodes/Links).
+ */
+export function convertGeminiToV1(geminiData: any): { nodes: Node[]; links: Link[] } {
+    const nodes: Node[] = [];
+    const links: Link[] = [];
+
+    const hasExplicitHubs = geminiData.hubs && Array.isArray(geminiData.hubs) && geminiData.hubs.length > 0;
+
+    if (hasExplicitHubs) {
+        // Use AI-discovered Themes (Hubs)
+        geminiData.hubs.forEach((hub: any, i: number) => {
+            nodes.push({
+                id: hub.id,
+                type: 'ANCHOR',
+                label: hub.name,
+                x: Math.random() * 200 - 100,
+                y: Math.random() * 200 - 100,
+                r: 25,
+                width: hub.name.length * 9 + 40,
+                height: 40,
+                insightIndex: i,
+                fx: null, fy: null
+            });
+        });
+
+        (geminiData.nodes || []).forEach((node: any) => {
+            const label = node.label || node.name || "Untitled";
+            const hubIdx = geminiData.hubs.findIndex((h: any) => h.id === node.hubId);
+            nodes.push({
+                id: node.id,
+                type: 'ENTITY', 
+                label: label,
+                text: label,
+                x: Math.random() * 400 - 200,
+                y: Math.random() * 400 - 200,
+                r: 10,
+                resonanceScore: 70, 
+                insightIndex: hubIdx,
+                summary: node.summary,
+                source_snippet: node.source_snippet
+            });
+
+            if (node.hubId) {
+                links.push({
+                    source: node.hubId,
+                    target: node.id,
+                    value: 1,
+                    type: 'CONTAINS'
+                });
+            }
+        });
+    } else {
+        // Fallback to generating hubs from 'type' label
+        const nodeTypes = new Set<string>();
+        (geminiData.nodes || []).forEach((n: any) => { if (n.type) nodeTypes.add(n.type); });
+
+        const typeToHubIdx = new Map<string, number>();
+        Array.from(nodeTypes).forEach((type, i) => {
+            typeToHubIdx.set(type, i);
+            nodes.push({
+                id: `hub-${type}`,
+                type: 'ANCHOR',
+                label: type.charAt(0).toUpperCase() + type.slice(1),
+                x: Math.random() * 200 - 100,
+                y: Math.random() * 200 - 100,
+                r: 25,
+                width: type.length * 9 + 40,
+                height: 40,
+                insightIndex: i,
+                fx: null, fy: null
+            });
+        });
+
+        (geminiData.nodes || []).forEach((node: any) => {
+            const label = node.label || node.name || "Untitled";
+            nodes.push({
+                id: node.id,
+                type: 'ENTITY',
+                label: label,
+                text: label,
+                x: Math.random() * 400 - 200,
+                y: Math.random() * 400 - 200,
+                r: 10,
+                resonanceScore: 70, 
+                insightIndex: typeToHubIdx.get(node.type) ?? -1,
+                summary: node.summary,
+                source_snippet: node.source_snippet
+            });
+
+            const hubId = `hub-${node.type}`;
+            links.push({
+                source: hubId,
+                target: node.id,
+                value: 1,
+                type: 'CONTAINS'
+            });
+        });
+    }
+
+    // Create directed relationships
+    (geminiData.edges || []).forEach((edge: any) => {
+        links.push({
+            source: edge.source,
+            target: edge.target,
+            value: 0.8,
+            type: 'DESCRIBES'
+        });
+    });
+
+    // FINAL SAFETY FILTER: D3 forceLink will explode if a link references a missing node ID.
+    const nodeIds = new Set(nodes.map(n => n.id));
+    const validLinks = links.filter(l => {
+        const sid = typeof l.source === 'string' ? l.source : (l.source as any).id;
+        const tid = typeof l.target === 'string' ? l.target : (l.target as any).id;
+        
+        const sourceExists = nodeIds.has(sid);
+        const targetExists = nodeIds.has(tid);
+        
+        if (!sourceExists || !targetExists) {
+            console.warn(`⚠️ [Brain] D3 Safety: Dropping link referencing missing node(s): ${sid} -> ${tid}`);
+        }
+        
+        return sourceExists && targetExists;
+    });
+
+    return { nodes, links: validLinks };
+}
+
+/**
+ * Converts SwampSession data (personas, anchors, epicenter) into V1 Engine format (Nodes/Links).
+ */
+export function convertSwampToV1(session: any): { nodes: Node[]; links: Link[] } {
+    const nodes: Node[] = [];
+    const links: Link[] = [];
+
+    // 1. Anchors (Thematic Centers)
+    (session.anchors || []).forEach((anchor: any, i: number) => {
+        nodes.push({
+            id: `swamp-anchor-${session.id}-${i}`,
+            type: 'ANCHOR',
+            label: anchor.name,
+            x: anchor.x,
+            y: anchor.y,
+            fx: anchor.x,
+            fy: anchor.y,
+            r: 25,
+            resonanceScore: (anchor.weight || 5) * 10,
+            insightIndex: i
+        });
+    });
+
+    // 2. Epicenter (Point of Maximum Friction)
+    if (session.epicenter) {
+        nodes.push({
+            id: `swamp-epicenter-${session.id}`,
+            type: 'EPICENTER',
+            label: session.epicenter.label.toUpperCase(),
+            x: session.epicenter.x,
+            y: session.epicenter.y,
+            fx: session.epicenter.x,
+            fy: session.epicenter.y,
+            r: 30,
+            resonanceScore: 100,
+            summary: session.epicenter.description
+        });
+    }
+
+    // 3. Personas (The Swarm)
+    (session.personas || []).forEach((persona: any) => {
+        const pId = persona.id || `persona-${Math.random()}`;
+        nodes.push({
+            id: pId,
+            type: 'PERSONA',
+            label: persona.name,
+            summary: persona.critique,
+            text: persona.critique,
+            x: (persona.x || 0),
+            y: (persona.y || 0),
+            r: 15,
+            resonanceScore: 80,
+            pkgId: session.packageName, // Crucial for icon lookups
+            // Group by package in case multiple swarms coexist
+            insightIndex: session.packageName === 'bauhaus' ? 0 
+                         : session.packageName === 'red-team' ? 1 
+                         : session.packageName === 'market-movers' ? 2 
+                         : 3
+        });
+
+        // Link to nearest anchor for structure
+        let nearestAnchorId = null;
+        let minDist = Infinity;
+        (session.anchors || []).forEach((anchor: any, idx: number) => {
+            const dx = (persona.x || 0) - anchor.x;
+            const dy = (persona.y || 0) - anchor.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < minDist) {
+                minDist = dist;
+                nearestAnchorId = `swamp-anchor-${session.id}-${idx}`;
+            }
+        });
+
+        if (nearestAnchorId) {
+            links.push({
+                source: pId,
+                target: nearestAnchorId,
+                value: 0.8,
+                type: 'DESCRIBES'
+            });
+        }
+
+        // Link to epicenter for friction
+        if (session.epicenter) {
+            links.push({
+                source: pId,
+                target: `swamp-epicenter-${session.id}`,
+                value: 1,
+                type: 'DESCRIBES'
+            });
+        }
+    });
+
+    return { nodes, links };
 }

@@ -34,14 +34,14 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${playfairDisplay.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${playfairDisplay.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('theme');
+                  const theme = localStorage.getItem('scribe-theme');
                   const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
                   if (theme === 'dark' || (!theme && supportDarkMode)) {
                     document.documentElement.setAttribute('data-theme', 'dark');
@@ -55,8 +55,8 @@ export default function RootLayout({
       <body className="antialiased bg-[var(--bg-app)] text-[var(--ink)] flex overflow-hidden w-screen h-screen" suppressHydrationWarning>
         <HardwareProvider>
           <Sidebar />
-          <div className="flex-1 flex flex-col h-full overflow-hidden relative p-0 md:p-5 md:pl-0 lg:p-6 lg:pl-0">
-            <main className="flex-1 overflow-hidden relative">
+          <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative p-0 md:p-5 md:pl-0 lg:p-6 lg:pl-0">
+            <main className="flex-1 h-full min-h-0 overflow-y-auto relative scroll-smooth">
               {children}
             </main>
           </div>

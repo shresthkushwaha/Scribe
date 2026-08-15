@@ -1,12 +1,57 @@
-'use client';
-import NavLink from 'next/link';
+import Link from 'next/link';
 import React, {
     useEffect, useRef, useState, useMemo, useCallback,
 } from 'react';
-import * as d3 from 'd3';
-import Link from 'next/link';
-import { ArrowLeft, X, TreeStructure } from '@phosphor-icons/react';
-import { Node, Link as GraphLink, LENS_CONFIGS, INSIGHT_COLORS, getClusterPositions } from '@/lib/graphEngine';
+import { 
+    ArrowLeft, X, TreeStructure, MagicWand, Sparkle, CircleNotch, 
+    ArrowsClockwise, Lightning, Ghost, Quotes, Selection, Warning, Graph, Compass
+} from '@phosphor-icons/react';
+import { useScribeV2Store } from '@/lib/store/scribeV2Store';
+import {
+    Node, Link as GraphLink, NodeType, LENS_CONFIGS, INSIGHT_COLORS, getClusterPositions,
+    AI_LENS_CONFIGS, convertGeminiToV1, convertSwampToV1
+} from '@/lib/graphEngine';
+import { summarizeConcepts } from '@/lib/services/scribeV2Brain';
+import { generateMutationBox, placeMutationBox } from '@/lib/services/mutationEngine';
+import { generateSwampSession, SwampSession } from '@/lib/services/swampBrain';
+import { RED_TEAM, BAUHAUS_COUNCIL, MARKET_MOVERS, DEEP_THINKERS } from '@/lib/constants/swampPersonas';
+import OracleGigaMap from './OracleGigaMap';
+import OatsenGigaMap from './OatsenGigaMap';
+import ScribeStrategist from '@/components/v2/ScribeStrategist';
+import DecisionCanvas from './DecisionCanvas';
+import { 
+    synthesizeStrategistInitialMap, 
+    routeStrategistMessage, 
+    executeStrategistQuery, 
+    keywordRoute,
+    executeMiniSwarm
+} from '@/lib/services/strategistGigaBrain';
+import { askWorkbenchOracle, getGigaMapCacheKey, GigaSatellite, GigaWorkbenchSession } from '@/lib/services/oracleGigaBrain';
+import { useMapStore } from '@/lib/mapStore';
+import GraphChatbot from './GraphChatbot';
+import type { ExtractedGraphPayload } from '@/lib/services/chatGraphEngine';
+
+const LENS_ICON_MAP: Record<string, React.ReactNode> = {
+    oracle:     <Compass size={14} weight="bold" />,
+    swamp:      <Ghost size={14} weight="regular" />,
+    strategist: <Lightning size={14} weight="regular" />,
+};
+
+const WORKBENCH_SKILLS = [
+    { id: 'find-problems', label: 'Audit Risks', icon: <Warning size={14} weight="bold" /> },
+    { id: 'generate-ideas', label: 'Innovation Lab', icon: <MagicWand size={14} weight="bold" /> },
+    { id: 'scamper', label: 'SCAMPER', icon: <ArrowsClockwise size={14} weight="bold" /> },
+    { id: 'first-principles', label: 'First Principles', icon: <TreeStructure size={14} weight="bold" /> },
+    { id: 'analogy', label: 'Analogy', icon: <Sparkle size={14} weight="bold" /> },
+    { id: 'pre-mortem', label: 'Pre-Mortem', icon: <Ghost size={14} weight="bold" /> },
+];
+
+const WORKBENCH_PERSONAS = [
+    { id: 'RED_TEAM', label: 'Red Team', color: '#ef4444', pkg: RED_TEAM },
+    { id: 'BAUHAUS_COUNCIL', label: 'Bauhaus Council', color: '#06b6d4', pkg: BAUHAUS_COUNCIL },
+    { id: 'MARKET_MOVERS', label: 'Market Movers', color: '#f59e0b', pkg: MARKET_MOVERS },
+    { id: 'DEEP_THINKERS', label: 'Deep Thinkers', color: '#8b5cf6', pkg: DEEP_THINKERS },
+];
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
 
@@ -16,78 +61,8 @@ interface Props {
     title?: string;
     backHref?: string;
     isArchipelago?: boolean;
-}
-
-// ─── Collision radius — lens-aware, prevents ALL overlap ───────────────────────
-// Analyst sentence pills can be 100-200px wide, weaver uses dots
-
-function pillW(n: Node): number {
-    if (n.type === 'ENTITY') return n.width ?? (n.label.length * 10 + 30);
-    if (n.type === 'TRAIT') return n.width ?? (n.label.length * 8 + 20);
-    const rs = n.resonanceScore ?? 50;
-    const max = rs > 60 ? 32 : 14;
-    const raw = n.text ?? '';
-    const lbl = raw.slice(0, max);
-    return Math.max(100, lbl.length * 7.2 + 30);
-}
-
-function collideR(n: Node, lens: string): number {
-    if (n.type === 'ANCHOR') return 0;
-
-    if (lens === 'weaver') {
-        if (n.type === 'SENTENCE') {
-            const rs = n.resonanceScore ?? 50;
-            if (rs > 60) return 22;
-            if (rs < 20) return 8;
-            return 14;
-        }
-        if (n.type === 'ENTITY') return (n.width ?? 80) / 1.8 + 14;
-        if (n.type === 'TRAIT') return (n.width ?? 50) / 1.8 + 10;
-        return 18;
-    }
-
-    // Analyst — pills need actual half-width + gap
-    if (n.type === 'SENTENCE') return pillW(n) / 2 + 14;
-    if (n.type === 'ENTITY') return pillW(n) / 2 + 12;
-    if (n.type === 'TRAIT') return pillW(n) / 2 + 10;
-    return 20;
-}
-
-// ─── Edge-point clip — returns the point on node boundary toward (ox,oy) ──────
-// Prevents the line appearing to come from the center of the shape.
-
-function getEdgePoint(
-    cx: number, cy: number,  // center of this node
-    ox: number, oy: number,  // center of other node
-    n: Node, lens: string,
-): { x: number; y: number } {
-    const dx = ox - cx;
-    const dy = oy - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 0.5) return { x: cx, y: cy };
-
-    if (n.type === 'ANCHOR') return { x: cx, y: cy };
-
-    // Weaver SENTENCE = circle
-    if (n.type === 'SENTENCE' && lens === 'weaver') {
-        const rs = n.resonanceScore ?? 50;
-        const r = rs > 60 ? 10 : rs < 20 ? 3 : 6;
-        return { x: cx + (dx / dist) * r, y: cy + (dy / dist) * r };
-    }
-
-    // Rect / pill — compute half-extents
-    let hw: number, hh: number;
-    if (n.type === 'SENTENCE') { hw = pillW(n) / 2; hh = 13; }
-    else if (n.type === 'ENTITY') { hw = pillW(n) / 2; hh = 15; }
-    else if (n.type === 'TRAIT') { hw = pillW(n) / 2; hh = 11; }
-    else { hw = 14; hh = 14; }
-
-    // Line-rect intersection: clip to whichever edge is hit first
-    const absX = Math.abs(dx);
-    const absY = Math.abs(dy);
-    const t = absX * hh > absY * hw ? hw / absX : hh / absY;
-
-    return { x: cx + dx * t, y: cy + dy * t };
+    sourceContent?: string;
+    noteId?: string;
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
@@ -98,720 +73,808 @@ export default function GraphCanvas({
     title,
     backHref = '/',
     isArchipelago = false,
+    sourceContent = "",
+    noteId,
 }: Props) {
-    const svgRef = useRef<SVGSVGElement>(null);
-    const wrapperRef = useRef<SVGGElement>(null);
-    const simRef = useRef<d3.Simulation<any, any> | null>(null);
-    const lensRef = useRef('weaver'); // keep current lens accessible in tick
-
-    const [lens, setLens] = useState<string>('weaver');
+    const { addOracleSession } = useScribeV2Store();
+    const [activeAiLens, setActiveAiLens] = useState<string | null>('oracle');
+    const [aiGraphData, setAiGraphData] = useState<{ nodes: Node[]; links: GraphLink[] } | null>(null);
+    const [swampSessions, setSwampSessions] = useState<SwampSession[]>([]);
+    const [selectedPackage, setSelectedPackage] = useState<string>('red-team');
+    const [isSynthesizing, setIsSynthesizing] = useState(false);
+    // const [lens, setLens] = useState<string>('weaver'); // Removed legacy lens
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [hoverId, setHoverId] = useState<string | null>(null);
+    const [isMutating, setIsMutating] = useState(false);
+    const [strategistMessages, setStrategistMessages] = useState<any[]>([]);
+    const [isStrategistExecuting, setIsStrategistExecuting] = useState(false);
 
-    // ── Connected-node set ────────────────────────────────────────────────────
-    const focusId = hoverId ?? activeId;
-    const connectedIds = useMemo(() => {
-        if (!focusId) return new Set<string>();
-        const s = new Set([focusId]);
-        propLinks.forEach(l => {
-            const sid = (l.source as any).id ?? l.source;
-            const tid = (l.target as any).id ?? l.target;
-            if (sid === focusId) s.add(tid as string);
-            if (tid === focusId) s.add(sid as string);
-        });
-        return s;
-    }, [focusId, propLinks]);
-
-    const activeNode = propNodes.find(n => n.id === activeId) ?? null;
-
-    const connectedNodes = useMemo(() => {
-        if (!activeId) return [];
-        return propNodes.filter(n => n.id !== activeId && connectedIds.has(n.id));
-    }, [activeId, propNodes, connectedIds]);
-
-    const entityPeers = connectedNodes.filter(n => n.type === 'ENTITY' || n.type === 'TRAIT');
-    const sentencePeers = connectedNodes.filter(n => n.type === 'SENTENCE');
-
-    // keep lensRef in sync so tick closure uses latest
-    useEffect(() => { lensRef.current = lens; }, [lens]);
-
-    // ── Simulation ────────────────────────────────────────────────────────────
+    // Persistence: Load history on mount
     useEffect(() => {
-        if (!propNodes.length) return;
-        if (simRef.current) simRef.current.stop();
-
-        const cfg = LENS_CONFIGS[lens] ?? LENS_CONFIGS.weaver;
-        const anchors = propNodes.filter(n => n.type === 'ANCHOR');
-        const nIslands = anchors.length;
-        const sentences = propNodes.filter(n => n.type === 'SENTENCE');
-        const nSentences = sentences.length;
-
-        const sim = d3.forceSimulation(propNodes as any)
-            .alphaDecay(0.015)
-            .alphaMin(0.001)
-            .velocityDecay(cfg.friction ?? 0.85)
-
-            // COLLISION — per-lens, per-type accurate radii, 4 iterations
-            .force('collide', d3.forceCollide<any>()
-                .radius(d => collideR(d, lens))
-                .strength(0.85)
-                .iterations(4))
-
-            // CHARGE
-            .force('charge', d3.forceManyBody<any>()
-                .strength(d => {
-                    if (d.type === 'ANCHOR') return 0;
-                    const rs = d.resonanceScore ?? 50;
-                    if (rs > 60) return -120;
-                    if (rs < 20) return -8;
-                    return (cfg.charge ?? -30) * (d.type === 'ENTITY' ? 1.6 : 1);
-                })
-                .distanceMax(360))
-
-            // X
-            .force('x', d3.forceX<any>(d => {
-                if (d.type === 'ANCHOR') return d.fx ?? 0;
-                if (isArchipelago && d.insightIndex != null && d.insightIndex !== -1) {
-                    return getClusterPositions(nIslands)[d.insightIndex]?.x ?? 0;
-                }
-                if (lens === 'weaver' && d.type === 'SENTENCE' && d.index !== undefined) {
-                    return (d.index * 40) - (nSentences * 20);
-                }
-                return 0;
-            }).strength(d => {
-                if (d.type === 'ANCHOR') return 1;
-                if (isArchipelago && d.insightIndex != null && d.insightIndex !== -1) return 0.4;
-                if (lens === 'weaver' && d.type === 'SENTENCE') return 1.0;
-                return cfg.gravity ?? 0.01;
-            }))
-
-            // Y
-            .force('y', d3.forceY<any>(d => {
-                if (d.type === 'ANCHOR') return d.fy ?? 0;
-                if (isArchipelago && d.insightIndex != null && d.insightIndex !== -1) {
-                    return getClusterPositions(nIslands)[d.insightIndex]?.y ?? 0;
-                }
-                return 0;
-            }).strength(d => {
-                if (d.type === 'ANCHOR') return 1;
-                if (isArchipelago && d.insightIndex != null && d.insightIndex !== -1) return 0.4;
-                if (lens === 'weaver') return 0.06;
-                return cfg.gravity ?? 0.01;
-            }))
-
-            // LINK
-            .force('link', d3.forceLink<any, any>(propLinks as any)
-                .id(d => d.id)
-                .distance(d => {
-                    if (isArchipelago) {
-                        const si = (d.source as any).insightIndex;
-                        const ti = (d.target as any).insightIndex;
-                        return (si === -1 || ti === -1) ? 220 : cfg.linkDist ?? 100;
-                    }
-                    return cfg.linkDist ?? 100;
-                })
-                .strength(d => (d as any).type === 'DESCRIBES' ? 0.25 : 0.55))
-
-            // MAGNETIC PULL toward active
-            .force('magnetX', d3.forceX<any>(d => {
-                if (!activeId) return 0;
-                const a = propNodes.find(n => n.id === activeId);
-                return (a as any)?.x ?? 0;
-            }).strength(d => {
-                if (!activeId || d.id === activeId || d.type === 'ANCHOR') return 0;
-                const connected = propLinks.some(l => {
-                    const s = (l.source as any).id ?? l.source;
-                    const t = (l.target as any).id ?? l.target;
-                    return (s === activeId && t === d.id) || (t === activeId && s === d.id);
-                });
-                return connected ? 0.28 : 0;
-            }))
-            .force('magnetY', d3.forceY<any>(d => {
-                if (!activeId) return 0;
-                const a = propNodes.find(n => n.id === activeId);
-                return (a as any)?.y ?? 0;
-            }).strength(d => {
-                if (!activeId || d.id === activeId || d.type === 'ANCHOR') return 0;
-                const connected = propLinks.some(l => {
-                    const s = (l.source as any).id ?? l.source;
-                    const t = (l.target as any).id ?? l.target;
-                    return (s === activeId && t === d.id) || (t === activeId && s === d.id);
-                });
-                return connected ? 0.28 : 0;
-            }));
-
-        if (!isArchipelago) {
-            sim.force('center', d3.forceCenter(0, 0).strength(0.05));
+        const key = `strategist-history-${noteId || 'multi'}`;
+        const cached = localStorage.getItem(key);
+        if (cached) {
+            try { setStrategistMessages(JSON.parse(cached)); } catch (e) {}
         }
+    }, [noteId]);
 
-        // Direct DOM tick (no React re-render per tick → smooth)
-        sim.on('tick', () => {
-            // Velocity clamp
-            (propNodes as any[]).forEach(d => {
-                if (d.vx != null) d.vx = Math.max(-3, Math.min(3, d.vx));
-                if (d.vy != null) d.vy = Math.max(-3, Math.min(3, d.vy));
-            });
+    // Persistence: Save history on change
+    useEffect(() => {
+        const key = `strategist-history-${noteId || 'multi'}`;
+        localStorage.setItem(key, JSON.stringify(strategistMessages));
+    }, [strategistMessages, noteId]);
 
-            if (!wrapperRef.current) return;
+    // Persistence: Load strategist graph on mount
+    useEffect(() => {
+        const key = `strategist-graph-${noteId || 'multi'}`;
+        const cached = localStorage.getItem(key);
+        if (cached && activeAiLens === 'strategist') {
+            try { setAiGraphData(JSON.parse(cached)); } catch (e) {}
+        }
+    }, [noteId, activeAiLens]);
 
-            const curLens = lensRef.current;
-            wrapperRef.current.querySelectorAll<SVGLineElement>('.sc-link').forEach((el, i) => {
-                const l = propLinks[i] as any;
-                if (!l?.source || !l?.target) return;
-                const sn = l.source as any;
-                const tn = l.target as any;
-                const sp = getEdgePoint(sn.x ?? 0, sn.y ?? 0, tn.x ?? 0, tn.y ?? 0, sn, curLens);
-                const tp = getEdgePoint(tn.x ?? 0, tn.y ?? 0, sn.x ?? 0, sn.y ?? 0, tn, curLens);
-                el.setAttribute('x1', String(sp.x));
-                el.setAttribute('y1', String(sp.y));
-                el.setAttribute('x2', String(tp.x));
-                el.setAttribute('y2', String(tp.y));
-            });
+    const { recordMap } = useMapStore();
 
-            wrapperRef.current.querySelectorAll<SVGGElement>('.sc-node').forEach(el => {
-                const n = (propNodes as any[]).find(x => x.id === el.getAttribute('data-id'));
-                if (n) el.setAttribute('transform', `translate(${n.x ?? 0},${n.y ?? 0})`);
-            });
+    // Persistence: Save strategist graph on change
+    useEffect(() => {
+        if (activeAiLens === 'strategist' && aiGraphData) {
+            const key = `strategist-graph-${noteId || 'multi'}`;
+            localStorage.setItem(key, JSON.stringify(aiGraphData));
+        }
+    }, [aiGraphData, noteId, activeAiLens]);
 
-            wrapperRef.current.querySelectorAll<SVGGElement>('.sc-anchor-g').forEach(el => {
-                const n = (propNodes as any[]).find(x => x.id === el.getAttribute('data-id'));
-                if (n) el.setAttribute('transform', `translate(${n.fx ?? n.x ?? 0},${n.fy ?? n.y ?? 0})`);
+    // Persistence: Record map snapshot in MapStore
+    useEffect(() => {
+        if (!activeAiLens || !aiGraphData?.nodes?.length) return;
+        const lensTitle = activeAiLens.charAt(0).toUpperCase() + activeAiLens.slice(1);
+        recordMap({
+            id: `ai-${activeAiLens}-${noteId || 'multi'}`,
+            title: `${lensTitle} Map: ${title || 'Untitled'}`,
+            type: (activeAiLens as any) || 'custom',
+            noteIds: noteId ? [noteId] : [],
+            noteTitles: [title || 'Untitled'],
+            nodeCount: aiGraphData.nodes.length,
+            linkCount: aiGraphData.links?.length || 0,
+            previewExcerpt: `AI generated ${lensTitle} synthesis map with ${aiGraphData.nodes.length} nodes.`,
+            href: noteId ? `/graph/${noteId}` : `/graph/multi`,
+        });
+    }, [activeAiLens, aiGraphData, noteId, title, recordMap]);
+
+    // ── Chatbot: Inject generated nodes and connections from AI response ──
+    const handleInjectChatGraph = (payload: ExtractedGraphPayload, userPrompt?: string) => {
+        if (!payload.nodes?.length) return;
+
+        // Clean and format user question for session heading with ellipsis if long
+        const rawQuestion = (userPrompt || 'Chat Insights').replace(/\n+/g, ' ').trim();
+        const formattedTitle = rawQuestion.length > 40 ? rawQuestion.slice(0, 37) + '...' : rawQuestion;
+
+        const currentN = (aiGraphData?.nodes && aiGraphData.nodes.length > 0) ? aiGraphData.nodes : propNodes;
+        const currentL = (aiGraphData?.links && aiGraphData.links.length > 0) ? aiGraphData.links : propLinks;
+
+        const anchorNode = activeNode || currentN.find(n => n.type === 'EPICENTER' || n.type === 'ENTITY') || currentN[0];
+        const anchorX = anchorNode?.x ?? 0;
+        const anchorY = anchorNode?.y ?? 0;
+
+        const newNodes: Node[] = payload.nodes.map((n, i) => {
+            const angle = (i / payload.nodes.length) * 2 * Math.PI;
+            const distance = 200 + (i % 2) * 60;
+            return {
+                id: n.id,
+                label: n.label,
+                type: (n.category === 'RISK' ? 'STRAT_RISK' : n.category === 'OPPORTUNITY' ? 'STRAT_OPPORTUNITY' : n.category === 'PATH' ? 'STRAT_PATH' : 'STRAT_INSIGHT') as NodeType,
+                summary: n.summary || n.label,
+                text: n.summary || n.label,
+                x: anchorX + Math.cos(angle) * distance,
+                y: anchorY + Math.sin(angle) * distance,
+                r: 18,
+                category: n.category || 'INSIGHT',
+                data: { 
+                    isLatest: true, 
+                    category: n.category || 'INSIGHT', 
+                    label: n.label, 
+                    summary: n.summary || n.label 
+                },
+            };
+        });
+
+        const newLinks: GraphLink[] = [];
+
+        // Internal edges between chat nodes
+        payload.edges?.forEach(e => {
+            newLinks.push({
+                source: e.source,
+                target: e.target,
+                value: 1.5,
+                type: 'SYNTHESIS',
             });
         });
 
-        simRef.current = sim;
-        sim.alpha(1).restart();
-        return () => { sim.stop(); };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [propNodes, propLinks, lens, activeId, isArchipelago]);
-
-    // ── Zoom — fixed: always preventDefault on wheel so browser never zooms ──
-    useEffect(() => {
-        const svg = svgRef.current;
-        if (!svg || !wrapperRef.current) return;
-
-        // Block native browser zoom on wheel events over the canvas
-        const blockWheel = (e: WheelEvent) => { e.preventDefault(); };
-        svg.addEventListener('wheel', blockWheel, { passive: false });
-
-        const zoom = d3.zoom<SVGSVGElement, unknown>()
-            .scaleExtent([0.04, 10])
-            // Never filter — allow zoom even when cursor is on a node;
-            // the SVG wheel handler handles preventDefault
-            .filter(() => true)
-            .on('zoom', e => {
-                if (wrapperRef.current) {
-                    wrapperRef.current.setAttribute('transform', e.transform.toString());
-                }
-            });
-
-        d3.select(svg).call(zoom)
-            .call(zoom.transform, d3.zoomIdentity
-                .translate(svg.clientWidth / 2 || window.innerWidth / 2,
-                    svg.clientHeight / 2 || window.innerHeight / 2)
-                .scale(0.85));
-
-        return () => { svg.removeEventListener('wheel', blockWheel); };
-    }, []);
-
-    // ── Drag ─────────────────────────────────────────────────────────────────
-    useEffect(() => {
-        if (!wrapperRef.current || !propNodes.length) return;
-        const drag = d3.drag<SVGGElement, any>()
-            .container(wrapperRef.current as any)
-            .subject((_, d) => d)
-            .on('start', (e, d) => {
-                if (d.type === 'ANCHOR') return;
-                if (!e.active) simRef.current?.alphaTarget(0.2).restart();
-                d.fx = d.x; d.fy = d.y;
-            })
-            .on('drag', (e, d) => {
-                if (d.type === 'ANCHOR') return;
-                d.fx = e.x; d.fy = e.y;
-            })
-            .on('end', (e, d) => {
-                if (d.type === 'ANCHOR') return;
-                if (!e.active) simRef.current?.alphaTarget(0);
-                if (d.id !== activeId) { d.fx = null; d.fy = null; }
-            });
-
-        const t = setTimeout(() => {
-            if (wrapperRef.current) {
-                d3.select(wrapperRef.current)
-                    .selectAll<SVGGElement, Node>('.sc-node')
-                    .data(propNodes)
-                    .call(drag);
+        // Main connections to existing nodes
+        payload.mainConnections?.forEach(mc => {
+            const targetId = mc.targetMainNodeId || anchorNode?.id;
+            if (targetId) {
+                newLinks.push({
+                    source: mc.sourceChatNodeId,
+                    target: targetId,
+                    value: 2,
+                    type: 'CONTAINS',
+                });
             }
-        }, 80);
-        return () => clearTimeout(t);
-    }, [propNodes, activeId]);
+        });
 
-    // ── Click handler ─────────────────────────────────────────────────────────
-    const handleNodeClick = useCallback((n: Node) => {
-        if (n.type === 'ANCHOR') return;
-        if (activeId === n.id) {
-            setActiveId(null);
-            (n as any).fx = null; (n as any).fy = null;
-        } else {
-            setActiveId(n.id);
-            (n as any).fx = (n as any).x;
-            (n as any).fy = (n as any).y;
+        // Fallback: If no explicit main connections, link first node directly to anchor
+        if ((!payload.mainConnections || payload.mainConnections.length === 0) && anchorNode && newNodes.length > 0) {
+            newLinks.push({
+                source: newNodes[0].id,
+                target: anchorNode.id,
+                value: 2,
+                type: 'CONTAINS',
+            });
         }
-        simRef.current?.alphaTarget(0.2).restart();
-        setTimeout(() => simRef.current?.alphaTarget(0), 1200);
+
+        const combinedNodes = [...currentN, ...newNodes];
+        const combinedLinks = [...currentL, ...newLinks];
+
+        // Inject directly into Oatsen GigaMap session state
+        const currentContextKey = getGigaMapCacheKey(sourceContent).toString();
+        const satellites: GigaSatellite[] = payload.nodes.map((n, idx) => ({
+            id: n.id || `sat-${Date.now()}-${idx}`,
+            name: n.label,
+            type: n.category || 'INSIGHT',
+            category: n.category || 'INSIGHT',
+            summary: n.summary || n.label,
+        }));
+
+        const targetId = payload.mainConnections?.[0]?.targetMainNodeId || activeNode?.id || (aiGraphData?.nodes?.[0]?.id) || 'pillar-0';
+
+        const newSession: GigaWorkbenchSession = {
+            id: `session-chat-${Date.now()}`,
+            type: 'generate-ideas',
+            title: formattedTitle,
+            nodes: satellites,
+            summary: payload.nodes.map(n => n.label).join(', '),
+            timestamp: new Date().toISOString(),
+            targetNodeIds: [targetId],
+            noteId: noteId,
+            contextKey: currentContextKey,
+        };
+
+        addOracleSession(newSession);
+
+        setAiGraphData({
+            nodes: combinedNodes,
+            links: combinedLinks,
+        });
+
+        // Ensure we stay in Oracle mode
+        if (activeAiLens !== 'oracle') {
+            setActiveAiLens('oracle');
+        }
+
+        recordMap({
+            id: noteId ? `note-${noteId}` : `custom-graph-${Date.now()}`,
+            title: title ? `${title} (${formattedTitle})` : formattedTitle,
+            type: 'oracle',
+            noteIds: noteId ? [noteId] : [],
+            noteTitles: [title || 'Untitled'],
+            nodeCount: combinedNodes.length,
+            linkCount: combinedLinks.length,
+            previewExcerpt: `Oracle graph extended with ${newNodes.length} nodes for: "${formattedTitle}"`,
+            href: noteId ? `/graph/${noteId}` : `/graph/multi`,
+        });
+    };
+
+    // Derived logic driver
+    const effLens = (activeAiLens === 'oracle' || activeAiLens === 'strategist') ? activeAiLens : 'oracle';
+    const effArch = true;
+
+    // Derived Display Data
+    const displayNodes = useMemo(() => {
+        if (aiGraphData?.nodes && aiGraphData.nodes.length > 0) {
+            return aiGraphData.nodes;
+        }
+        return propNodes;
+    }, [aiGraphData, propNodes]);
+
+    const displayLinks = useMemo(() => {
+        if (aiGraphData?.links && aiGraphData.links.length > 0) {
+            return aiGraphData.links;
+        }
+        return propLinks;
+    }, [aiGraphData, propLinks]);
+
+    const exportGraphToMarkdown = useCallback(() => {
+        let md = `# Map Export\n\n`;
+        const nodes = aiGraphData?.nodes || displayNodes || [];
+        nodes.forEach(n => {
+            md += `### ${n.label || n.name}\n`;
+            if (n.summary) md += `${n.summary}\n`;
+            md += `\n`;
+        });
+        const blob = new Blob([md], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scribe_export_${Date.now()}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, [aiGraphData, displayNodes]);
+
+    // ── Auto-Trigger Strategist ──────────────────────────────────────────────
+    useEffect(() => {
+        if (activeAiLens === 'strategist' && !aiGraphData && !isSynthesizing && sourceContent) {
+            handleTriggerAi('strategist');
+        }
+    }, [activeAiLens, aiGraphData, isSynthesizing, sourceContent]);
+
+    useEffect(() => {
+        if (activeAiLens && activeAiLens !== 'oracle' && activeAiLens !== 'swamp' && activeAiLens !== 'strategist') {
+            setAiGraphData(null);
+        }
+    }, [activeAiLens]);
+
+    // ── AI Synthesis ──────────────────────────────────────────────────────────
+    const handleTriggerAi = useCallback(async (lensKey: string, force = false, overridePackage?: string) => {
+        if (!force && activeAiLens === lensKey && !overridePackage && lensKey !== 'strategist') {
+            setActiveAiLens(null);
+            setAiGraphData(null);
+            return;
+        }
+
+        setIsSynthesizing(true);
+        setActiveAiLens(lensKey);
+
+        try {
+            if (lensKey === 'strategist' || lensKey === 'oracle') {
+                // GigaMap (Oracle/Strategist) handles its own synthesis internally.
+                // We just mark it as synthesizing until the data comes back via onDataGenerated.
+                setIsSynthesizing(true);
+                return;
+            } else if (lensKey === 'swamp') {
+                const pkgId = overridePackage || selectedPackage;
+                setSelectedPackage(pkgId);
+
+                const cacheKey = `swamp-cache-${noteId || 'multi'}-${pkgId}`;
+                const cached = localStorage.getItem(cacheKey);
+                if (cached && !force) {
+                    try {
+                        const session = JSON.parse(cached);
+                        setSwampSessions(prev => [...prev, session]);
+                        const converted = convertSwampToV1(session);
+                        setAiGraphData(prev => ({
+                            nodes: [...(prev?.nodes || []), ...converted.nodes],
+                            links: [...(prev?.links || []), ...converted.links]
+                        }));
+                        setIsSynthesizing(false);
+                        return;
+                    } catch (e) {
+                        localStorage.removeItem(cacheKey);
+                    }
+                }
+
+                let selectedPersonas = RED_TEAM;
+                if (pkgId === 'bauhaus') selectedPersonas = BAUHAUS_COUNCIL;
+                if (pkgId === 'market-movers') selectedPersonas = MARKET_MOVERS;
+                if (pkgId === 'deep-thinkers') selectedPersonas = DEEP_THINKERS;
+
+                const session = await generateSwampSession(noteId || "multi", sourceContent, pkgId, selectedPersonas);
+                if (session) {
+                    localStorage.setItem(cacheKey, JSON.stringify(session));
+                    setSwampSessions(prev => [...prev, session]);
+                    const converted = convertSwampToV1(session);
+                    setAiGraphData(prev => ({
+                        nodes: [...(prev?.nodes || []), ...converted.nodes],
+                        links: [...(prev?.links || []), ...converted.links]
+                    }));
+                }
+            } else {
+                const config = AI_LENS_CONFIGS[lensKey];
+                if (config) {
+                    const result = await summarizeConcepts(sourceContent, config.systemPrompt, force);
+                    if (result) {
+                        const converted = convertGeminiToV1(result);
+                        setAiGraphData(converted);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("AI Synthesis Error:", err);
+        } finally {
+            setIsSynthesizing(false);
+        }
+    }, [activeAiLens, sourceContent, noteId, swampSessions, selectedPackage]);
+
+    // ── Strategist: Universal node injection with Spatial Sections ──────────────────
+    const processMutationResult = (result: any, baseNodes: Node[], prompt: string) => {
+        if (!result?.nodes?.length) return;
+
+        const coolingDownNodes = baseNodes.map(n => ({
+            ...n,
+            data: { ...n.data, isLatest: false }
+        }));
+
+        const newNodes: Node[] = [];
+        const newLinks: GraphLink[] = [];
+        let counter = 0;
+        const generateId = () => `strat-node-${Date.now()}-${counter++}`;
+
+        const epicenter = coolingDownNodes.find(n => n.type === 'EPICENTER') || coolingDownNodes[0];
+        const cx = epicenter?.x || 0;
+        const cy = epicenter?.y || 0;
+
+        const mapBounds = coolingDownNodes.reduce((acc, n) => {
+            const dx = n.x - cx;
+            const dy = n.y - cy;
+            return Math.max(acc, Math.sqrt(dx*dx + dy*dy));
+        }, 600);
+
+        let buckets = { top: 0, center: 0, bottom: 0 };
+        result.nodes.forEach((n: any) => {
+            const cat = n.category || 'INSIGHT';
+            if (['RISK', 'CRITIQUE', 'OPPORTUNITY'].includes(cat)) buckets.top++;
+            else if (['PATH'].includes(cat)) buckets.bottom++;
+            else buckets.center++;
+        });
+
+        const activeBuckets = (buckets.top > 0 ? 1 : 0) + (buckets.center > 0 ? 1 : 0) + (buckets.bottom > 0 ? 1 : 0);
+        const maxBucketSize = Math.max(buckets.top, buckets.center, buckets.bottom, 1);
+        const nodeSpacingX = 300; 
+        const rowHeight = 220;
+
+        const sectionWidth = (maxBucketSize > 0 ? (maxBucketSize - 1) * nodeSpacingX : 0) + 280;
+        const sectionHeight = (activeBuckets > 0 ? (activeBuckets - 1) * rowHeight : 0) + 320; 
+
+        const jitter = ((Date.now() % 1000) / 1000 - 0.5) * (Math.PI / 4);
+        const finalAngle = (Math.PI / 2) + jitter; 
+        const orbitRadius = mapBounds + 850;
+
+        const sectionId = `section-${Date.now()}`;
+        const sectionPos = {
+            x: cx + Math.cos(finalAngle) * orbitRadius - (sectionWidth / 2),
+            y: cy + Math.sin(finalAngle) * (orbitRadius + 100) - (sectionHeight / 2)
+        };
+
+        if (sectionPos.y < (cy + mapBounds)) {
+            sectionPos.y = cy + mapBounds + 200;
+        }
+
+        newNodes.push({
+            id: sectionId,
+            type: 'SECTION_GROUP' as any,
+            label: prompt.slice(0, 80) + (prompt.length > 80 ? '...' : ''),
+            x: sectionPos.x,
+            y: sectionPos.y,
+            width: sectionWidth,
+            height: sectionHeight,
+            style: { width: sectionWidth, height: sectionHeight },
+            data: { isLatest: true }
+        } as any);
+
+        const CONFIG: Record<string, any> = {
+            'RISK': { type: 'STRAT_RISK', r: 45 },
+            'CRITIQUE': { type: 'STRAT_CRITIQUE', r: 45 },
+            'PATH': { type: 'STRAT_PATH', r: 50 },
+            'INSIGHT': { type: 'STRAT_INSIGHT', r: 48 }
+        };
+
+        const sessionLabel = result.sessionTitle || result.title || 'Strategic Analysis';
+        let counts = { top: 0, center: 0, bottom: 0 };
+
+        const findContextNode = (label: string, category: string) => {
+            const terms = label.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 3);
+            const targets = category === 'RISK' ? ['ENTITY', 'STRAT_FACT'] : 
+                          category === 'OPPORTUNITY' ? ['STRAT_INSIGHT', 'ANCHOR'] :
+                          ['EPICENTER', 'ANCHOR', 'SENTENCE'];
+            
+            let best = epicenter;
+            let maxScore = -1;
+            coolingDownNodes.forEach(n => {
+                if (n.type === 'SECTION_GROUP' || n.id.startsWith('strat-node')) return;
+                let score = targets.includes(n.type) ? 30 : 0;
+                const nLabel = (n.label || n.text || "").toLowerCase();
+                terms.forEach(t => { if (nLabel.includes(t)) score += 100; });
+                if (score > maxScore) { maxScore = score; best = n; }
+            });
+            return best;
+        };
+
+        const nodesWithIds = result.nodes.map((nodeData: any, i: number) => ({
+            ...nodeData,
+            id: `strat-node-${Date.now()}-${i}`
+        }));
+
+        nodesWithIds.forEach((nodeData: any, i: number) => {
+            const id = nodeData.id;
+            const cat = nodeData.category || 'INSIGHT';
+            const cfg = CONFIG[cat] || CONFIG['INSIGHT'];
+            
+            let bucket: 'top'|'center'|'bottom' = 'center';
+            if (['RISK', 'CRITIQUE', 'OPPORTUNITY'].includes(cat)) bucket = 'top';
+            else if (['PATH'].includes(cat)) bucket = 'bottom';
+
+            const totalInBucket = buckets[bucket];
+            const idxInBucket = counts[bucket]++;
+            
+            let rowYFactor = 0.5;
+            if (activeBuckets === 3) {
+                rowYFactor = bucket === 'top' ? 0.25 : bucket === 'bottom' ? 0.75 : 0.5;
+            } else if (activeBuckets === 2) {
+                if (buckets.top && buckets.center) rowYFactor = bucket === 'top' ? 0.3 : 0.7;
+                else if (buckets.top && buckets.bottom) rowYFactor = bucket === 'top' ? 0.3 : 0.7;
+                else rowYFactor = bucket === 'center' ? 0.3 : 0.7;
+            }
+
+            const bucketWidth = (totalInBucket - 1) * nodeSpacingX;
+            const startX = (sectionWidth / 2) - (bucketWidth / 2);
+            const targetX = startX + (idxInBucket * nodeSpacingX);
+
+            newNodes.push({
+                id,
+                parentId: sectionId,
+                type: cfg.type as any,
+                label: nodeData.label || `Node ${i + 1}`,
+                summary: nodeData.summary || '',
+                persona: nodeData.persona,
+                category: nodeData.category,
+                sessionTitle: sessionLabel,
+                sessionCategory: result.sessionCategory,
+                intensity: nodeData.intensity ?? 0.7,
+                x: targetX,
+                y: sectionHeight * rowYFactor - 40,
+                r: cfg.r,
+                resonanceScore: 80,
+                extent: 'parent',
+                data: { isLatest: true }
+            } as any);
+
+            const relevantNode = findContextNode(nodeData.label || '', cat);
+            if (relevantNode?.id) {
+                newLinks.push({ source: id, target: relevantNode.id, value: 0.5, type: 'STRAT_LINK_SUBTLE' as any });
+            }
+        });
+
+        const activeRes = coolingDownNodes.find(n => n.id === activeId);
+        if (activeRes?.id) {
+            newLinks.push({ source: sectionId, target: activeRes.id, value: 1.0, type: 'STRAT_LINK' as any });
+        } else if (epicenter?.id) {
+            newLinks.push({ source: sectionId, target: epicenter.id, value: 1.0, type: 'STRAT_LINK' as any });
+        }
+
+        const sessionTitle = result.sessionTitle || prompt;
+        const session: any = {
+            id: `strat-ui-${Date.now()}`,
+            type: 'analyze',
+            title: sessionTitle,
+            summary: result.chatSummary || prompt,
+            timestamp: new Date().toISOString(),
+            targetNodeIds: activeId ? [activeId] : (epicenter?.id ? [epicenter.id] : []),
+            nodes: nodesWithIds.map((n: any) => ({
+                id: n.id,
+                name: n.label,
+                type: (n.category || 'INSIGHT').toLowerCase(),
+                summary: n.summary
+            }))
+        };
+        addOracleSession(session);
+
+        setAiGraphData(prev => ({
+            nodes: [...coolingDownNodes, ...newNodes],
+            links: [...(prev?.links || []), ...newLinks]
+        }));
+    };
+
+    const handleStrategistMutate = (result: any, baseNodes: Node[], prompt: string) => {
+        processMutationResult(result, baseNodes, prompt);
+    };
+
+    const handleStrategistSend = useCallback(async (text: string) => {
+        if (isStrategistExecuting) return;
+        setIsStrategistExecuting(true);
+        const userMsg = { role: 'user', text, timestamp: Date.now() };
+        setStrategistMessages(prev => [...prev, userMsg]);
+
+        try {
+            const currentNodes = displayNodes;
+            const keywordSkillId = keywordRoute(text);
+            let intent = keywordSkillId 
+                ? { skillId: keywordSkillId, reasoning: `Applying ${keywordSkillId.replace('-', ' ')} per your request.` }
+                : await routeStrategistMessage(text, currentNodes);
+
+            if (!intent) intent = { skillId: 'red-team', reasoning: 'Strategic Audit sequence initiated.' };
+
+            setStrategistMessages(prev => [...prev, {
+                role: 'assistant',
+                text: intent!.reasoning,
+                skillId: intent!.skillId,
+                type: 'logic-transparent',
+                timestamp: Date.now()
+            }]);
+
+            const result = await executeStrategistQuery(text, intent.skillId, sourceContent, currentNodes);
+            if (result) {
+                setStrategistMessages(prev => [...prev, {
+                    role: 'assistant',
+                    text: result.chatSummary,
+                    sessionTitle: result.sessionTitle,
+                    sessionCategory: result.sessionCategory,
+                    nodeCount: result.nodes.length,
+                    timestamp: Date.now()
+                }]);
+                handleStrategistMutate(result, currentNodes, text);
+            }
+        } catch (err) {
+            console.error("[Strategist] Send Error:", err);
+        } finally {
+            setIsStrategistExecuting(false);
+        }
+    }, [isStrategistExecuting, sourceContent, displayNodes, handleStrategistMutate]);
+
+    const activeNode = displayNodes.find(n => n.id === activeId) ?? null;
+
+    const handleNodeClick = useCallback((nodeId: string | null) => {
+        setActiveId(nodeId === activeId ? null : nodeId);
     }, [activeId]);
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    const hasFocus = !!focusId;
+    const handleMutation = useCallback(async (technique: string = 'scamper-divergence') => {
+        if (!activeNode) return;
+        setIsMutating(true);
+        const result = await generateMutationBox(technique, { 
+            id: activeNode.id, label: activeNode.label, 
+            text: activeNode.summary || activeNode.text || activeNode.label, 
+            x: activeNode.x ?? 0, y: activeNode.y ?? 0 
+        }, []);
 
-    function ic(n: Node) {
-        if (!isArchipelago || (n.insightIndex ?? -2) < 0) return null;
-        return INSIGHT_COLORS[(n.insightIndex!) % INSIGHT_COLORS.length];
-    }
+        if (result && activeAiLens) {
+            const mutNodesWithIds = result.satellites.map((s: any, i: number) => ({
+                ...s,
+                id: `mut-${Date.now()}-${i}`
+            }));
 
-    function pillLabel(n: Node): string {
-        if (n.type !== 'SENTENCE') return n.label;
-        const rs = n.resonanceScore ?? 50;
-        const max = rs > 60 ? 32 : 14;
-        const raw = n.text ?? '';
-        return raw.slice(0, max) + (raw.length > max ? '…' : '');
-    }
+            const newNodes: Node[] = mutNodesWithIds.map(s => ({
+                id: s.id, type: 'ENTITY', label: s.title, summary: s.logic,
+                x: (activeNode.x ?? 0) + s.coords.x, y: (activeNode.y ?? 0) + s.coords.y,
+                r: 12, resonanceScore: 80, insightIndex: activeNode.insightIndex,
+                data: { isLatest: true }
+            }));
 
-    const interactive = propNodes.filter(n => n.type !== 'ANCHOR');
-    const anchorNodes = propNodes.filter(n => n.type === 'ANCHOR');
+            const mutSession: any = {
+                id: `mut-ui-${Date.now()}`,
+                type: technique,
+                title: technique,
+                summary: "Mutation Logic applied",
+                timestamp: new Date().toISOString(),
+                targetNodeIds: [activeNode.id],
+                nodes: mutNodesWithIds.map((s: any) => ({
+                    id: s.id,
+                    name: s.title,
+                    type: 'insight',
+                    summary: s.logic
+                }))
+            };
+            addOracleSession(mutSession);
 
-    // ── Render ────────────────────────────────────────────────────────────────
+            setAiGraphData(prev => {
+                const cooled = (prev?.nodes || []).map(n => ({ ...n, data: { ...n.data, isLatest: false } }));
+                const newLinks: GraphLink[] = newNodes.map(n => ({ source: activeNode.id, target: n.id, value: 1, type: 'STRAT_LINK' as any }));
+                return {
+                    nodes: [...cooled, ...newNodes],
+                    links: [...(prev?.links || []), ...newLinks]
+                };
+            });
+        }
+        setIsMutating(false);
+    }, [activeNode, activeAiLens]);
+
+    const handleSkillTrigger = useCallback(async (skillId: string) => {
+        if (!activeNode) return;
+        setIsMutating(true);
+        try {
+            const result = await askWorkbenchOracle(skillId as any, [{
+                id: activeNode.id,
+                name: activeNode.label,
+                type: activeNode.type,
+                summary: activeNode.summary || activeNode.text || activeNode.label
+            }], sourceContent || "");
+
+            if (result && result.nodes) {
+                const prompt = `Advanced Skill: ${WORKBENCH_SKILLS.find(s=>s.id === skillId)?.label || skillId}`;
+                processMutationResult(result, displayNodes, prompt);
+            }
+        } catch (e) {}
+        setIsMutating(false);
+    }, [activeNode, sourceContent, displayNodes]);
+
+    const handlePersonaTrigger = useCallback(async (pkgId: string, pkg: any[]) => {
+        if (!activeNode) return;
+        setIsMutating(true);
+        try {
+            const result = await executeMiniSwarm({
+                id: activeNode.id,
+                label: activeNode.label,
+                text: activeNode.summary || activeNode.text || activeNode.label
+            }, pkg, sourceContent || "");
+
+            if (result && result.nodes) {
+                const prompt = `Swarm Critique: ${pkgId.replace('_', ' ')}`;
+                processMutationResult(result, displayNodes, prompt);
+            }
+        } catch (e) {}
+        setIsMutating(false);
+    }, [activeNode, sourceContent, displayNodes]);
+
     return (
-        <div className="fixed inset-0 overflow-hidden" style={{ background: 'var(--bg)' }}>
-
-            {/* ── Top bar ── */}
-            <div
-                className="absolute top-0 left-0 right-0 z-40 sm:h-11 flex flex-wrap sm:flex-nowrap items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-0 min-h-[44px]"
-                style={{
-                    background: 'var(--bg-muted)',
-                    backdropFilter: 'blur(16px)',
-                    borderBottom: '1px solid var(--border-soft)',
-                }}
-            >
+        <div className="fixed! inset-0! w-screen! h-screen! overflow-hidden z-2000 graph-page" style={{ background: 'var(--tactical-bg)' }}>
+            <div className="absolute top-4 left-4 right-4 z-1000 h-14 flex items-center gap-3 px-6 rounded-2xl tactical-glass transition-all duration-500 border border-white/20 shadow-2xl">
                 {backHref && (
-                    <NavLink href={backHref}
-                        className="graph-back-btn flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] transition-colors mr-1 sm:mr-1 shrink-0"
-                        style={{ color: 'var(--text-2)', fontFamily: 'var(--font-inter, sans-serif)' }}
-                    >
-                        <ArrowLeft size={14} weight="bold" />
-                        Back
-                    </NavLink>
+                    <Link href={backHref} className="graph-back-btn flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest mr-2 shrink-0">
+                        <ArrowLeft size={16} weight="bold" /> Back
+                    </Link>
                 )}
-                <div className="w-px h-3 mx-1 shrink-0" style={{ background: 'var(--border)' }} />
-                {/* Lens tabs */}
-                <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-1 shrink-0 max-w-[55%] sm:max-w-full">
-                    {Object.entries(LENS_CONFIGS).map(([key, cfg]) => (
-                        <button key={key} onClick={() => setLens(key)}
-                            className="text-[9px] sm:text-[11px] px-2 sm:px-3 py-1 rounded-full transition-all duration-200 shrink-0 whitespace-nowrap"
-                            style={{
-                                fontFamily: 'var(--font-inter, sans-serif)',
-                                letterSpacing: '0.02em',
-                                background: lens === key ? 'var(--text-1)' : 'transparent',
-                                border: `1px solid ${lens === key ? 'var(--text-1)' : 'transparent'}`,
-                                color: lens === key ? 'var(--bg)' : 'var(--text-3)',
-                            }}>
-                            {cfg.label}
+                <div className="w-px h-4 bg-white/20 mx-1 shrink-0" />
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1 shrink-0 ml-auto">
+                    {activeAiLens && (
+                        <button 
+                            onClick={() => handleTriggerAi(activeAiLens, true)} 
+                            disabled={isSynthesizing}
+                            className="flex items-center gap-2 text-[11px] px-4 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-600 font-black uppercase tracking-widest hover:bg-orange-500/20 transition-all mr-4 shadow-sm"
+                            title="Force AI Regeneration"
+                        >
+                            <ArrowsClockwise size={14} weight="bold" className={isSynthesizing ? 'animate-spin' : ''} />
+                            <span>Regenerate</span>
                         </button>
-                    ))}
+                    )}
+                    {Object.entries(AI_LENS_CONFIGS).map(([key, cfg]) => {
+                        const isActive = activeAiLens === key;
+                        return (
+                            <button key={key} onClick={() => handleTriggerAi(key)} disabled={isSynthesizing && !isActive}
+                                className={`flex items-center gap-2 text-[11px] px-4 py-1.5 rounded-full border transition-all duration-500 font-bold uppercase tracking-tighter
+                                    ${isActive ? 'bg-black text-white border-black shadow-xl scale-105' : 'bg-white/50 border-white/40 text-black shadow-sm hover:bg-white'}`}>
+                                {isSynthesizing && isActive ? (
+                                    <CircleNotch size={14} weight="bold" className="animate-spin" />
+                                ) : isActive ? (
+                                    LENS_ICON_MAP[key] ?? <Sparkle size={14} weight="fill" />
+                                ) : (
+                                    LENS_ICON_MAP[key] ?? <Sparkle size={14} weight="regular" />
+                                )}
+                                <span className="inline">{cfg.label}</span>
+                            </button>
+                        );
+                    })}
+                    <div className="w-px h-4 bg-white/20 mx-1 shrink-0" />
+                    <button onClick={exportGraphToMarkdown} className="flex items-center gap-2 text-[11px] px-4 py-1.5 rounded-full border border-white/20 bg-white/50 hover:bg-black hover:text-white transition-all text-black font-bold uppercase tracking-tighter shadow-sm">
+                        Export MD
+                    </button>
                 </div>
-                <div className="flex-1" />
-                {title && (
-                    <span className="text-[11px] sm:text-[13px] truncate max-w-[120px] sm:max-w-[200px] shrink-0"
-                        style={{
-                            color: 'var(--text-3)',
-                            fontFamily: 'var(--font-dm-serif, serif)',
-                            fontStyle: 'italic',
-                        }}>
-                        {title}
-                    </span>
+            </div>
+
+            <div className="w-full h-full relative z-0">
+                {activeAiLens === 'oracle' ? (
+                    <OatsenGigaMap
+                        sourceContent={sourceContent ?? ''}
+                        onClose={() => setActiveAiLens(null)}
+                        noteId={noteId}
+                        onDataGenerated={(data) => {
+                            const pNodes = data.pillars.map(p => ({ id: p.id, label: p.name, type: 'ENTITY' as any, x: 0, y: 0, r: 20, summary: p.name }));
+                            const cNodes = data.clusters.map(c => ({ id: c.id, label: c.name, type: 'ENTITY' as any, x: 0, y: 0, r: 15, summary: c.name }));
+                            const lNodes = data.leaves.map(l => ({ id: l.id, label: l.name, type: 'ENTITY' as any, x: 0, y: 0, r: 10, summary: l.summary || l.name }));
+                            setAiGraphData({ nodes: [...pNodes, ...cNodes, ...lNodes], links: [] });
+                            setIsSynthesizing(false);
+                        }}
+                    />
+                ) : activeAiLens === 'strategist' ? (
+                    <OracleGigaMap 
+                        sourceContent={sourceContent ?? ''} 
+                        onClose={() => setActiveAiLens(null)} 
+                        noteId={noteId} 
+                        mode={activeAiLens} 
+                        onNodeSelect={(nodeId) => setActiveId(nodeId)}
+                        onDataGenerated={(data) => {
+                            console.log("[GraphCanvas] GigaMap Data Received:", data.pillars.length, "pillars");
+                            // Map GigaMapData to our GraphCanvas internal Node/Link format
+                            const pNodes = data.pillars.map(p => ({ 
+                                id: p.id, label: p.name, type: 'ENTITY' as NodeType, 
+                                x: 0, y: 0, r: 20, 
+                                summary: p.name 
+                            }));
+                            const cNodes = data.clusters.map(c => ({ 
+                                id: c.id, label: c.name, type: 'ENTITY' as NodeType, 
+                                x: 0, y: 0, r: 15, 
+                                summary: c.name 
+                            }));
+                            const lNodes = data.leaves.map(l => ({ 
+                                id: l.id, label: l.name, type: 'ENTITY' as NodeType, 
+                                x: 0, y: 0, r: 10, 
+                                summary: l.summary || l.name 
+                            }));
+
+                            const allNodes: Node[] = [...pNodes, ...cNodes, ...lNodes];
+                            const allLinks: GraphLink[] = (data.crossLinks || []).map(cl => ({ 
+                                source: cl.source, target: cl.target, value: 1, 
+                                type: 'STRAT_LINK' as const 
+                            }));
+                            
+                            console.log("[GraphCanvas] Synced nodes for workbench:", allNodes.length);
+                            setAiGraphData({ nodes: allNodes, links: allLinks });
+                            setIsSynthesizing(false);
+                        }}
+                    />
+                ) : (
+                    <DecisionCanvas nodes={displayNodes} links={displayLinks} onNodeSelect={(nodeId) => handleNodeClick(nodeId)} lens={effLens as any} />
                 )}
             </div>
 
-            {/* ── SVG Canvas ── (starts below toolbar) */}
-            <svg
-                ref={svgRef}
-                className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing pb-20 sm:pb-0"
-                style={{ paddingTop: 44 }}
-                onClick={() => { setActiveId(null); }}
-            >
-                <defs>
-                    <filter id="glow-sm">
-                        <feGaussianBlur stdDeviation="2" result="b" />
-                        <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-                    </filter>
-                    <filter id="glow-md">
-                        <feGaussianBlur stdDeviation="4" result="b" />
-                        <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-                    </filter>
-                    <radialGradient id="fog" cx="50%" cy="50%" r="55%">
-                        <stop offset="40%" stopColor="var(--bg-app)" stopOpacity="0" />
-                        <stop offset="100%" stopColor="var(--bg-app)" stopOpacity="0.55" />
-                    </radialGradient>
-                </defs>
-
-                <g ref={wrapperRef}>
-
-                    {/* ── Archipelago aura rings ── */}
-                    {isArchipelago && anchorNodes.map((anchor, i) => {
-                        const color = INSIGHT_COLORS[i % INSIGHT_COLORS.length];
-                        return (
-                            <g key={`aura-${anchor.id}`}
-                                className="sc-anchor-g" data-id={anchor.id}
-                                transform={`translate(${anchor.fx ?? anchor.x ?? 0},${anchor.fy ?? anchor.y ?? 0})`}
-                                pointerEvents="none">
-                                <circle r={148} fill={color.fill} opacity={0.85} />
-                                <circle r={148} fill="none" stroke={color.stroke} strokeWidth={0.8} opacity={0.3} />
-                            </g>
-                        );
-                    })}
-
-                    {/* ── Links ── */}
-                    {propLinks.map((l, i) => {
-                        const sid = (l.source as any).id ?? l.source;
-                        const tid = (l.target as any).id ?? l.target;
-                        const hi = hasFocus && (sid === focusId || tid === focusId);
-                        const dim = hasFocus && !hi;
-                        const isBridge = isArchipelago && (() => {
-                            const sn = propNodes.find(n => n.id === sid);
-                            const tn = propNodes.find(n => n.id === tid);
-                            return sn?.insightIndex === -1 || tn?.insightIndex === -1;
-                        })();
-                        return (
-                            <line key={i} className="sc-link"
-                                stroke="var(--ink)"
-                                strokeOpacity={
-                                    hi ? 0.75
-                                        : dim ? 0.04
-                                            : isBridge ? 0.3
-                                                : l.type === 'CONTAINS' ? 0.2 : 0.12
-                                }
-                                strokeWidth={hi ? 1.8 : isBridge ? 1.2 : l.type === 'CONTAINS' ? 0.9 : 0.6}
-                                strokeDasharray={l.type === 'DESCRIBES' ? '3 5' : undefined}
-                            />
-                        );
-                    })}
-
-                    {/* ── Nodes ── */}
-                    {interactive.map(n => {
-                        const isActive = activeId === n.id;
-                        const color = ic(n);
-                        const rs = n.resonanceScore ?? 50;
-                        const isStar = rs > 60;
-                        const isDim = rs < 20;
-
-                        // Color grading logic based on global connections
-                        const deg = n.globalDegree ?? 0;
-                        const isHot = deg >= 3;
-                        const isWarm = deg > 0 && deg < 3;
-
-                        const dimmed = hasFocus && !connectedIds.has(n.id);
-
-                        return (
-                            <g key={n.id} data-id={n.id}
-                                className="sc-node"
-                                style={{
-                                    cursor: 'pointer',
-                                    opacity: dimmed ? 0.06 : 1,
-                                    transition: 'opacity 0.2s',
-                                }}
-                                onClick={e => { e.stopPropagation(); handleNodeClick(n); }}
-                                onMouseEnter={() => setHoverId(n.id)}
-                                onMouseLeave={() => setHoverId(null)}
-                            >
-                                {n.type === 'SENTENCE' ? (
-                                    lens === 'weaver' ? (
-                                        // ── Weaver: semantic dots ──
-                                        <>
-                                            {isStar && (
-                                                <>
-                                                    <circle r={20} fill={color?.stroke ?? 'var(--bg-muted)'} />
-                                                    <circle r={10} fill={color?.dot ?? 'var(--text-1)'} />
-                                                    <circle r={18} fill="none"
-                                                        stroke={color?.stroke ?? 'var(--border)'}
-                                                        strokeWidth={1} />
-                                                    <text y={-26} textAnchor="middle" fontSize={8.5}
-                                                        fill={color?.dot ?? 'var(--text-2)'}
-                                                        fontFamily="monospace" pointerEvents="none"
-                                                        style={{ userSelect: 'none' }}>
-                                                        {(n.text ?? '').slice(0, 28) + ((n.text?.length ?? 0) > 28 ? '…' : '')}
-                                                    </text>
-                                                </>
-                                            )}
-                                            {!isStar && !isDim && (
-                                                <circle r={6}
-                                                    fill={color?.dot ?? 'var(--text-3)'}
-                                                    stroke={isActive ? 'var(--text-1)' : 'none'} strokeWidth={1.5} />
-                                            )}
-                                            {isDim && (
-                                                <circle r={3} fill={color?.dot ?? 'var(--border)'} />
-                                            )}
-                                        </>
-                                    ) : (
-                                        // ── Analyst: pill cards ──
-                                        (() => {
-                                            const w = pillW(n);
-                                            const lbl = pillLabel(n);
-                                            return (
-                                                <>
-                                                    {isStar && (
-                                                        <ellipse rx={w / 2 + 10} ry={22}
-                                                            fill="none"
-                                                            stroke={color?.stroke ?? 'rgba(0,0,0,0.08)'}
-                                                            strokeWidth={1}
-                                                        />
-                                                    )}
-                                                    <rect x={-w / 2} y={-13} width={w} height={26} rx={13}
-                                                        fill={color ? color.fill : (
-                                                            isStar ? 'var(--bg)' : isDim ? 'var(--bg-muted)' : 'var(--bg-card)'
-                                                        )}
-                                                        stroke={color?.dot ?? (
-                                                            isActive ? 'var(--text-1)' : isStar ? 'var(--text-3)' : isDim ? 'transparent' : 'var(--border)'
-                                                        )}
-                                                        strokeWidth={isActive ? 1.8 : isStar ? 1.2 : 0.7}
-                                                    />
-                                                    <text textAnchor="middle" dominantBaseline="middle"
-                                                        fontSize={isStar ? 11 : 9.5}
-                                                        fontFamily="monospace"
-                                                        fill={color?.dot ?? (
-                                                            isStar ? 'var(--text-1)' : isDim ? 'var(--text-4)' : 'var(--text-2)'
-                                                        )}
-                                                        pointerEvents="none" style={{ userSelect: 'none' }}>
-                                                        {lbl}
-                                                    </text>
-                                                </>
-                                            );
-                                        })()
-                                    )
-                                ) : n.type === 'ENTITY' ? (
-                                    // ── Entity chips ──
-                                    (() => {
-                                        const w = pillW(n);
-                                        return (
-                                            <>
-                                                <rect x={-w / 2} y={-15} width={w} height={30} rx={6}
-                                                    fill={color ? color.fill : (isHot ? 'var(--accent-red-bg, #faedf0)' : isWarm ? 'var(--accent-orange-bg, #fff7e6)' : 'var(--bg-card)')}
-                                                    stroke={color?.dot ?? (
-                                                        isActive ? 'var(--text-1)' : isHot ? 'var(--accent-red)' : isWarm ? 'var(--accent-orange)' : 'var(--border)'
-                                                    )}
-                                                    strokeWidth={isActive ? 1.8 : 1}
-                                                />
-                                                <text textAnchor="middle" dominantBaseline="middle"
-                                                    fontSize={11} fontFamily="monospace" fontWeight="500"
-                                                    fill={color?.dot ?? (isHot ? 'var(--accent-red)' : isWarm ? 'var(--accent-orange)' : 'var(--text-2)')}
-                                                    pointerEvents="none" style={{ userSelect: 'none' }}>
-                                                    {n.label}
-                                                </text>
-                                            </>
-                                        );
-                                    })()
-                                ) : (
-                                    // ── Trait tags ──
-                                    (() => {
-                                        const w = pillW(n);
-                                        return (
-                                            <>
-                                                <rect x={-w / 2} y={-11} width={w} height={22} rx={11}
-                                                    fill="var(--bg-muted)"
-                                                    stroke={isActive ? 'var(--text-1)' : 'var(--border)'}
-                                                    strokeWidth={isActive ? 1.5 : 0.8}
-                                                />
-                                                <text textAnchor="middle" dominantBaseline="middle"
-                                                    fontSize={9} fontFamily="monospace"
-                                                    fill="var(--text-3)"
-                                                    pointerEvents="none" style={{ userSelect: 'none' }}>
-                                                    {n.label}
-                                                </text>
-                                            </>
-                                        );
-                                    })()
-                                )}
-                            </g>
-                        );
-                    })}
-
-                    {/* ── Anchor chips on top ── */}
-                    {isArchipelago && anchorNodes.map((anchor, i) => {
-                        const color = INSIGHT_COLORS[i % INSIGHT_COLORS.length];
-                        const w = anchor.width ?? (anchor.label.length * 9 + 38);
-                        return (
-                            <g key={`chip-${anchor.id}`}
-                                className="sc-anchor-g" data-id={`chip-${anchor.id}`}
-                                transform={`translate(${anchor.fx ?? anchor.x ?? 0},${anchor.fy ?? anchor.y ?? 0})`}
-                                pointerEvents="none">
-                                <rect x={-w / 2} y={-17} width={w} height={34} rx={17}
-                                    fill="var(--ink)" stroke={color.stroke} strokeWidth={1.5} opacity={0.97} />
-                                <text textAnchor="middle" dominantBaseline="middle"
-                                    fontSize={11} fontFamily="monospace" fontWeight="600"
-                                    fill={color.dot}>
-                                    {anchor.label}
-                                </text>
-                            </g>
-                        );
-                    })}
-                </g>
-            </svg>
-
-            {/* ── Connection details panel ── */}
             {activeNode && (
-                <div
-                    className="fixed top-[60px] sm:top-[60px] right-2 sm:right-4 w-[280px] sm:w-[300px] max-h-[calc(100vh-140px)] sm:max-h-[calc(100vh-80px)]
-                        flex flex-col overflow-hidden z-50 card"
-                    style={{
-                        animation: 'panelIn 180ms cubic-bezier(.22,1,.36,1)',
-                    }}
-                >
-                    <style>{`
-                        @keyframes panelIn {
-                            from { opacity:0; transform: translateX(8px) scale(0.98); }
-                            to   { opacity:1; transform: translateX(0) scale(1); }
-                        }
-                    `}</style>
-
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-5 pt-5 pb-2">
-                        <span className="text-[9px] font-mono text-[var(--text-3)] uppercase tracking-[0.18em]">
-                            {activeNode.type}
-                            {activeNode.resonanceScore != null && (
-                                <span className="ml-2 text-[var(--text-2)] normal-case tracking-normal">
-                                    rs {Math.round(activeNode.resonanceScore)}
-                                </span>
-                            )}
-                        </span>
-                        <button
-                            onClick={() => { setActiveId(null); (activeNode as any).fx = null; (activeNode as any).fy = null; }}
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--text-3)]
-                                hover:text-[var(--text-1)] hover:bg-[var(--bg-muted)] transition-all">
-                            <X size={14} weight="bold" />
-                        </button>
+                <div className="fixed top-20 right-6 w-[360px] max-h-[calc(100vh-120px)] flex flex-col overflow-hidden z-50 tactical-glass rounded-3xl animate-in slide-in-from-right-8 duration-500 shadow-2xl border border-white/30">
+                    <div className="flex items-center justify-between px-6 pt-6 pb-2">
+                        <span className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.2em] font-black opacity-80">{activeNode.type}</span>
+                        <button onClick={() => setActiveId(null)} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 transition-all"><X size={18} weight="bold" /></button>
                     </div>
-
-                    {/* Scrollable body */}
-                    <div className="overflow-y-auto flex-1 px-5 pb-5">
-                        {/* Content */}
-                        {activeNode.type === 'SENTENCE' ? (
-                            <>
-                                <p className="text-[var(--text-2)] text-[12px] font-mono leading-[1.8] break-words mb-3">
-                                    "{activeNode.text}"
-                                </p>
-                                {activeNode.resonanceScore != null && (
-                                    <div className="mb-4">
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-[9px] font-mono text-[var(--text-3)] uppercase tracking-widest">Resonance</span>
-                                            <span className="text-[9px] font-mono text-[var(--text-4)]">{Math.round(activeNode.resonanceScore)}%</span>
-                                        </div>
-                                        <div className="h-[2px] rounded-full bg-[var(--border)] overflow-hidden">
-                                            <div className="h-full rounded-full"
-                                                style={{
-                                                    width: `${activeNode.resonanceScore}%`,
-                                                    background: activeNode.resonanceScore > 60
-                                                        ? 'var(--accent-green)'
-                                                        : activeNode.resonanceScore > 30
-                                                            ? 'var(--accent-amber)'
-                                                            : 'var(--accent-red)',
-                                                }} />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {(activeNode as any).metadata?.noteId && (
-                                    <div className="mt-4 pt-4 border-t border-[var(--border-soft)]">
-                                        <Link
-                                            href={`/graph/${(activeNode as any).metadata.noteId}`}
-                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-                                                bg-[var(--text-1)] text-[var(--bg)] font-medium text-[12px]
-                                                hover:opacity-90 transition-all shadow-sm"
-                                        >
-                                            <TreeStructure size={16} weight="bold" />
-                                            Open Note Graph
-                                        </Link>
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            <p className="text-[var(--text-1)] text-[14px] font-mono font-semibold mb-4">{activeNode.label}</p>
-                        )}
-
-                        {/* Connections */}
-                        {connectedNodes.length > 0 && (
-                            <>
-                                <div className="h-px bg-[var(--border-soft)] mb-3.5" />
-                                <p className="text-[9px] font-mono text-[var(--text-3)] uppercase tracking-[0.18em] mb-2.5">
-                                    {connectedNodes.length} connection{connectedNodes.length !== 1 ? 's' : ''}
-                                </p>
-
-                                {/* Entity / Trait peers */}
-                                {entityPeers.length > 0 && (
-                                    <div className="space-y-1 mb-3">
-                                        {entityPeers.map(peer => (
-                                            <button key={peer.id}
-                                                onClick={e => { e.stopPropagation(); handleNodeClick(peer); }}
-                                                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg
-                                                    bg-[var(--bg-card)] hover:bg-[var(--bg-hover)]
-                                                    border border-transparent hover:border-[var(--border)]
-                                                    text-left transition-all group">
-                                                <span className={`w-[5px] h-[5px] rounded-full shrink-0
-                                                    ${peer.type === 'ENTITY' ? 'bg-[var(--text-4)]' : 'bg-purple-300'}`} />
-                                                <span className="text-[11px] font-mono text-[var(--text-2)] group-hover:text-[var(--text-1)] transition-colors flex-1 truncate">
-                                                    {peer.label}
-                                                </span>
-                                                <span className="text-[var(--text-4)] text-[9px] group-hover:text-[var(--text-3)] transition-colors">
-                                                    {peer.type === 'ENTITY' ? 'entity' : 'trait'}
-                                                </span>
-                                                <span className="text-[var(--text-4)] group-hover:text-[var(--text-2)] group-hover:translate-x-0.5 transition-all text-[10px]">→</span>
+                    <div className="overflow-y-auto flex-1 px-6 pb-8">
+                        <h3 className="text-black text-lg font-mono font-black mb-4 uppercase tracking-tight">{activeNode.label}</h3>
+                        <p className="text-gray-800 text-[14px] leading-relaxed pl-4 border-l-[3px] border-black/20 italic">{activeNode.summary || activeNode.text}</p>
+                        
+                        {activeAiLens === 'strategist' && (
+                            <div className="mt-8 pt-6 border-t border-black/10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                <section>
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <Sparkle size={14} className="text-amber-500" /> Advanced Skills
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {WORKBENCH_SKILLS.map(skill => (
+                                            <button 
+                                                key={skill.id}
+                                                onClick={() => handleSkillTrigger(skill.id)}
+                                                disabled={isMutating}
+                                                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-black/10 bg-black/5 hover:bg-black hover:text-white transition-all text-left group disabled:opacity-50"
+                                            >
+                                                <span className="text-gray-500 group-hover:text-amber-400 transition-colors">{skill.icon}</span>
+                                                <span className="text-[10px] font-black uppercase tracking-tight">{skill.label}</span>
                                             </button>
                                         ))}
                                     </div>
-                                )}
+                                </section>
 
-                                {/* Sentence peers */}
-                                {sentencePeers.length > 0 && (
-                                    <div className="space-y-1">
-                                        <p className="text-[9px] font-mono text-[var(--text-4)] uppercase tracking-widest mb-1.5">Passages</p>
-                                        {sentencePeers.slice(0, 7).map(peer => {
-                                            const prs = peer.resonanceScore ?? 0;
-                                            return (
-                                                <button key={peer.id}
-                                                    onClick={e => { e.stopPropagation(); handleNodeClick(peer); }}
-                                                    className="w-full flex items-start gap-2 px-3 py-2.5 rounded-lg
-                                                        bg-[var(--bg-card)] hover:bg-[var(--bg-hover)]
-                                                        border border-transparent hover:border-[var(--border)]
-                                                        text-left transition-all group">
-                                                    <span className={`w-[5px] h-[5px] rounded-full shrink-0 mt-1.5
-                                                        ${prs > 60 ? 'bg-[#b87333]' : prs < 20 ? 'bg-[var(--border)]' : 'bg-[var(--text-4)]'}`} />
-                                                    <span className="text-[11px] font-mono text-[var(--text-3)] group-hover:text-[var(--text-2)]
-                                                        transition-colors leading-relaxed line-clamp-2 flex-1">
-                                                        {peer.text?.slice(0, 85)}{(peer.text?.length ?? 0) > 85 ? '…' : ''}
-                                                    </span>
-                                                    <span className="text-[var(--text-4)] group-hover:text-[var(--text-2)] group-hover:translate-x-0.5 transition-all text-[10px] shrink-0 mt-0.5">→</span>
-                                                </button>
-                                            );
-                                        })}
-                                        {sentencePeers.length > 7 && (
-                                            <p className="text-[10px] font-mono justify-center pt-1 text-[var(--text-4)]">
-                                                +{sentencePeers.length - 7} more
-                                            </p>
-                                        )}
+                                <section>
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <TreeStructure size={14} className="text-indigo-500" /> Swarm Personas
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {WORKBENCH_PERSONAS.map(p => (
+                                            <button 
+                                                key={p.id}
+                                                onClick={() => handlePersonaTrigger(p.id, p.pkg)}
+                                                disabled={isMutating}
+                                                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-black/10 bg-black/5 hover:bg-black hover:text-white transition-all text-left group disabled:opacity-50"
+                                            >
+                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }} />
+                                                <span className="text-[10px] font-black uppercase tracking-tight">{p.label}</span>
+                                            </button>
+                                        ))}
                                     </div>
-                                )}
-                            </>
+                                </section>
+
+                                <button onClick={() => handleMutation()} disabled={isMutating} className="w-full flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl bg-black text-white font-black text-[11px] tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-95 shadow-xl">
+                                    {isMutating ? <CircleNotch size={18} className="animate-spin" /> : <Lightning size={18} weight="fill" className="text-amber-400" />} Evolve Component
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* ── Empty state ── */}
-            {interactive.length === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none pt-24">
-                    <p className="text-zinc-800 font-mono text-sm tracking-[0.2em] uppercase">
-                        No content to visualise
-                    </p>
-                </div>
+            {activeAiLens === 'strategist' && (
+                <ScribeStrategist messages={strategistMessages} isExecuting={isStrategistExecuting} onSendMessage={handleStrategistSend} onClose={() => setActiveAiLens(null)} />
             )}
+
+            {/* AI Graph Chatbot with Make Graph node generation */}
+            <GraphChatbot
+                title={title || 'Knowledge Graph'}
+                sourceContent={sourceContent}
+                existingNodes={displayNodes}
+                activeNode={activeNode ? { id: activeNode.id, label: activeNode.label } : null}
+                onInjectGraphData={handleInjectChatGraph}
+            />
         </div>
     );
 }

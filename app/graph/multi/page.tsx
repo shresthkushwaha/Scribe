@@ -4,12 +4,14 @@ import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useNotesStore } from '@/lib/notesStore';
+import { useMapStore } from '@/lib/mapStore';
 import { buildArchipelagoGraph } from '@/lib/graphEngine';
 import GraphCanvas from '@/components/GraphCanvas';
 import React, { Suspense } from 'react';
 
 function MultiGraphContent() {
     const { notes, loaded, load } = useNotesStore();
+    const { recordMap } = useMapStore();
     const searchParams = useSearchParams();
 
     useEffect(() => { load(); }, []);
@@ -28,6 +30,22 @@ function MultiGraphContent() {
             selectedNotes.map(n => ({ id: n.id, title: n.title || 'Untitled', body: n.body }))
         );
     }, [selectedNotes]);
+
+    useEffect(() => {
+        if (selectedNotes.length < 2) return;
+        const sortedIds = [...ids].sort().join(',');
+        recordMap({
+            id: `archipelago-${sortedIds}`,
+            title: selectedNotes.map(n => n.title || 'Untitled').join(' + '),
+            type: 'multi',
+            noteIds: ids,
+            noteTitles: selectedNotes.map(n => n.title || 'Untitled'),
+            nodeCount: nodes.length,
+            linkCount: links.length,
+            previewExcerpt: `Cross-note archipelago connecting ${selectedNotes.length} notes.`,
+            href: `/graph/multi?ids=${ids.join(',')}`,
+        });
+    }, [ids, selectedNotes, nodes.length, links.length, recordMap]);
 
     if (!loaded) {
         return (
@@ -55,6 +73,8 @@ function MultiGraphContent() {
             isArchipelago={true}
             title={selectedNotes.map(n => n.title).join(', ')}
             backHref="/notes"
+            sourceContent={selectedNotes.map(n => `Title: ${n.title}\nContent: ${n.body}`).join('\n\n---\n\n')}
+            noteId={ids[0]}
         />
     );
 }

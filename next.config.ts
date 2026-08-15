@@ -27,13 +27,21 @@ const pwaConfig = withPWA({
 });
 
 const nextConfig = pwaConfig({
-  webpack: (config: any, { isServer }: { isServer: boolean }) => {
+  webpack: (config: any, { isServer, dev }: { isServer: boolean; dev: boolean }) => {
+    if (dev) {
+      config.devtool = 'cheap-module-source-map';
+    }
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         path: false,
         crypto: false,
+        canvas: false,
+      };
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        canvas: false,
       };
     }
     return config;

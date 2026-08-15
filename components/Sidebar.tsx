@@ -3,15 +3,64 @@
 import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useNotesStore } from '@/lib/notesStore';
+import { useNotesStore, Note } from '@/lib/notesStore';
 import { DataMigration } from './DataMigration';
-import { FileText, Star, Archive, Trash, Plus, Hash, CaretLeft, CaretRight, Sun, Moon } from '@phosphor-icons/react';
+import { FileText, Star, Archive, Trash, Plus, Hash, CaretLeft, CaretRight, Sun, Moon, FilePdf, FileArrowUp, CircleNotch, Gear, TreeStructure, Key, Compass } from '@phosphor-icons/react';
+import { extractTextFromFile } from '@/lib/documentUtils';
+import { v4 as uuidv4 } from 'uuid';
+import BYOKModal from './BYOKModal';
+import { useBYOKStore } from '@/lib/byokStore';
 
 function SidebarContent() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const { notes, theme, setTheme } = useNotesStore();
+    const { notes, theme, setTheme, upsert } = useNotesStore();
+    const { config, load: loadBYOK } = useBYOKStore();
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isBYOKOpen, setIsBYOKOpen] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        loadBYOK();
+    }, [loadBYOK]);
+
+    const activeBYOKKey = config.keys.find(k => k.id === config.activeKeyId);
+
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const text = await extractTextFromFile(file);
+            const ext = file.name.split('.').pop()?.toLowerCase() || 'doc';
+            const cleanTitle = file.name.replace(new RegExp(`\\.${ext}$`, 'i'), '');
+            const newNote: Note = {
+                id: uuidv4(),
+                title: cleanTitle,
+                body: text || `No text extracted from ${ext.toUpperCase()}.`,
+                tags: [`${ext}-import`],
+                autoTags: [],
+                starred: false,
+                archived: false,
+                trashed: false,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+            };
+            await upsert(newNote);
+        } catch (err: any) {
+            console.error("Document Upload Failed:", err);
+            alert(`Failed to extract text from document: ${err?.message || err}`);
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
 
     // Initialize theme from localStorage or system preference
     useEffect(() => {
@@ -30,10 +79,11 @@ function SidebarContent() {
 
     const navItems = [
         { label: 'All Notes', href: '/notes', icon: <FileText size={18} weight="regular" /> },
+        { label: 'Graphs', href: '/graph', icon: <TreeStructure size={18} weight="regular" /> },
         { label: 'Starred', href: '/notes?filter=starred', icon: <Star size={18} weight="regular" /> },
         { label: 'Archive', href: '/notes?filter=archive', icon: <Archive size={18} weight="regular" /> },
         { label: 'Trash', href: '/notes?filter=trash', icon: <Trash size={18} weight="regular" /> },
-        { label: 'Settings', href: '/settings', icon: <Hash size={18} weight="regular" /> }
+        { label: 'Settings', href: '/settings', icon: <Gear size={18} weight="regular" /> }
     ];
 
     const uniqueTags = useMemo(() => {
@@ -42,7 +92,18 @@ function SidebarContent() {
         return [...m.entries()].sort((a, b) => b[1] - a[1]);
     }, [notes]);
 
-    if (pathname.startsWith('/graph')) return null;
+    const [hasVisited, setHasVisited] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        try {
+            setHasVisited(!!localStorage.getItem('scribe_visited'));
+        } catch {
+            setHasVisited(true);
+        }
+    }, [pathname]);
+
+    const isFullscreenGraph = pathname === '/landing' || (pathname === '/' && hasVisited === false) || pathname === '/graph/multi' || pathname === '/graph/v2' || (pathname.startsWith('/graph/') && pathname !== '/graph');
+    if (isFullscreenGraph) return null;
 
     const colors = [
         'var(--tag-1, #E8A8A8)',
@@ -91,17 +152,43 @@ function SidebarContent() {
                         const iconToRender = active ? React.cloneElement(item.icon, { weight: "fill" }) : item.icon;
 
                         return (
-                            <Link
-                                key={item.label}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-sm)] transition-colors text-[14px] font-medium ${active ? 'bg-[var(--bg-lavender)] text-[var(--ink)]' : 'text-[var(--ink)] hover:bg-[var(--bg-muted)]'
-                                    } ${isCollapsed ? 'justify-center' : ''}`}
-                            >
-                                <div className={`${active ? 'text-[var(--ink)]' : 'text-[var(--ink-dim)]'}`} title={isCollapsed ? item.label : undefined}>
-                                    {iconToRender}
-                                </div>
-                                {!isCollapsed && <span className="whitespace-nowrap">{item.label}</span>}
-                            </Link>
+                            <React.Fragment key={item.label}>
+                                {item.label === 'Settings' && (
+                                    <button
+                                        onClick={() => setIsBYOKOpen(true)}
+                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-sm)] transition-colors text-[14px] font-medium text-[var(--ink)] hover:bg-[var(--bg-muted)] text-left ${isCollapsed ? 'justify-center' : ''}`}
+                                        title={isCollapsed ? "API Keys (BYOK)" : undefined}
+                                    >
+                                        <div className="text-[var(--ink-dim)]">
+                                            <Key size={18} weight="regular" />
+                                        </div>
+                                        {!isCollapsed && (
+                                            <div className="flex items-center justify-between w-full">
+                                                <span className="whitespace-nowrap">API Key</span>
+                                                {activeBYOKKey ? (
+                                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                                        Active
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                                                        BYOK
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </button>
+                                )}
+                                <Link
+                                    href={item.href}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-sm)] transition-colors text-[14px] font-medium ${active ? 'bg-[var(--bg-lavender)] text-[var(--ink)]' : 'text-[var(--ink)] hover:bg-[var(--bg-muted)]'
+                                        } ${isCollapsed ? 'justify-center' : ''}`}
+                                >
+                                    <div className={`${active ? 'text-[var(--ink)]' : 'text-[var(--ink-dim)]'}`} title={isCollapsed ? item.label : undefined}>
+                                        {iconToRender}
+                                    </div>
+                                    {!isCollapsed && <span className="whitespace-nowrap">{item.label}</span>}
+                                </Link>
+                            </React.Fragment>
                         );
                     })}
                 </nav>
@@ -131,7 +218,25 @@ function SidebarContent() {
                 </div>
             </div>
 
-            <div className="mt-auto pt-6">
+            <div className="mt-auto pt-6 flex flex-col gap-2">
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept=".pdf,.docx,.doc,.txt,.md"
+                    className="hidden"
+                />
+                
+                <button
+                    onClick={handleUploadClick}
+                    disabled={isUploading}
+                    className={`flex justify-center items-center gap-2 p-3 w-full rounded-md text-[13px] font-semibold transition-all border border-(--border-soft) bg-(--bg-card) text-(--ink) hover:bg-(--bg-muted) shadow-sm ${isCollapsed ? 'px-0' : ''}`}
+                    title={isCollapsed ? "Upload Document" : undefined}
+                >
+                    {isUploading ? <CircleNotch size={18} className="animate-spin" /> : <FileArrowUp size={18} weight="bold" className="text-blue-500" />}
+                    {!isCollapsed && (isUploading ? 'Extracting...' : 'Upload Doc')}
+                </button>
+
                 <Link
                     href="/notes/new"
                     className={`flex justify-center items-center gap-2 p-3.5 w-full rounded-md text-[14px] font-semibold transition-transform hover:-translate-y-px shadow-[0_4px_12px_rgba(0,0,0,0.3)] ${isCollapsed ? 'px-0' : ''}`}
@@ -142,6 +247,11 @@ function SidebarContent() {
                     {!isCollapsed && 'New Note'}
                 </Link>
             </div>
+
+            <BYOKModal 
+                isOpen={isBYOKOpen} 
+                onClose={() => setIsBYOKOpen(false)} 
+            />
         </aside>
     );
 }

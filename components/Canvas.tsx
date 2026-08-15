@@ -7,7 +7,9 @@ import { useStore, ScribeNode, ScribeLink } from '../lib/store';
 import Note from './Note';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const LENS_CONFIGS = {
+const LENS_CONFIGS: Record<string, { charge: number; gravity: number; linkDist: number }> = {
+    STRATEGIST: { charge: -80, gravity: 0.08, linkDist: 140 },
+    ORACLE: { charge: -120, gravity: 0.1, linkDist: 160 },
     WEAVER: { charge: -30, gravity: 0.05, linkDist: 100 },
     ANALYST: { charge: -100, gravity: 0.1, linkDist: 150 },
     EXPERIMENTAL: { charge: -50, gravity: 0.02, linkDist: 120 },
@@ -28,7 +30,7 @@ export default function Canvas() {
     useEffect(() => {
         if (simRef.current) simRef.current.stop();
 
-        const config = LENS_CONFIGS[lens];
+        const config = LENS_CONFIGS[lens] || LENS_CONFIGS.EXPERIMENTAL;
 
         const sim = d3.forceSimulation(nodes as any)
             .force("charge", d3.forceManyBody().strength((d: any) => {
@@ -39,11 +41,11 @@ export default function Canvas() {
 
             // Adaptation for Lenses
             .force("x", d3.forceX((d: any) => {
-                if (lens === 'WEAVER' && d.type === 'SENTENCE' && d.index !== undefined) {
+                if ((lens as string) === 'WEAVER' && d.type === 'SENTENCE' && d.index !== undefined) {
                     return (d.index * 60) - (nodes.length * 15);
                 }
                 return window.innerWidth / 2;
-            }).strength((d: any) => (lens === 'WEAVER' && d.type === 'SENTENCE' ? 0.8 : config.gravity)))
+            }).strength((d: any) => ((lens as string) === 'WEAVER' && d.type === 'SENTENCE' ? 0.8 : config.gravity)))
 
             .force("y", d3.forceY(window.innerHeight / 2).strength(config.gravity))
 

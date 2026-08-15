@@ -31,7 +31,7 @@ export interface ScribeLink {
 }
 
 export type View = 'HOME' | 'CANVAS';
-export type Lens = 'WEAVER' | 'ANALYST' | 'EXPERIMENTAL';
+export type Lens = 'STRATEGIST' | 'ORACLE' | 'EXPERIMENTAL';
 export type Depth = 'MACRO' | 'MICRO' | 'NANO';
 
 interface Store {
@@ -73,7 +73,7 @@ export const useStore = create<Store>((set, get) => ({
   masterNodes: [],
   masterLinks: [],
   view: 'HOME',
-  lens: 'WEAVER',
+  lens: 'STRATEGIST',
   depth: 'MACRO',
   isProcessing: false,
   activeNodeId: null,

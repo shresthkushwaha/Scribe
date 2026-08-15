@@ -12,6 +12,23 @@
     --bg-sky: #DAE6ED;
     --bg-lavender: #DCDCF0;
 
+    /* Tactical Noir / Blueprint Tokens */
+    --tactical-bg: #ffffff;
+    --tactical-bg-muted: #f9fafb;
+    --tactical-glass: rgba(255, 255, 255, 0.72);
+    --tactical-ink-1: #1d1d1f;
+    --tactical-ink-2: #6e6e73;
+    --tactical-ink-3: #86868b;
+    --tactical-border: rgba(0, 0, 0, 0.08);
+    --tactical-noise: 0.015;
+
+    /* Swarm Signals */
+    --swarm-red: #ff453a;
+    --swarm-rose: #ffd1dc;
+    --swarm-mint: #30d158;
+    --swarm-violet: #bf5af2;
+    --swarm-blue: #0a84ff;
+
     --bg-app: #FAFAFA;
     --bg-card: #FFFFFF;
     --bg-muted: rgba(62, 56, 56, 0.04);
