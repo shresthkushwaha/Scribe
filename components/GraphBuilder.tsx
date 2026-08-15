@@ -33,8 +33,8 @@ export function GraphBuilder({ selectedIds, onToggle, onClear }: GraphBuilderPro
     };
 
     return (
-        <aside className="flex flex-col h-full bg-[var(--bg-app)] border-l border-[var(--border-soft)] w-full max-w-[400px] hidden xl:flex">
-            <div className="p-6 border-b border-[var(--border-soft)] bg-gradient-to-br from-orange-100/60 via-orange-50/40 to-rose-100/50">
+        <aside className="w-full max-w-[400px] hidden xl:flex flex-col h-full bg-gradient-to-br from-[#FFFdfa] to-[var(--bg-peach)]/30 rounded-none md:rounded-[28px] lg:rounded-[32px] shadow-none md:shadow-sm border-none md:border border-[rgba(0,0,0,0.05)] overflow-hidden">
+            <div className="p-6 border-b border-[rgba(0,0,0,0.05)]">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-serif text-[24px] font-semibold text-[var(--ink)]">Build a graph</h2>
                     <button

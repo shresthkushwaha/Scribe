@@ -116,7 +116,7 @@ export default function HomePage() {
                     <h2 className="text-[18px] font-semibold tracking-tight" style={{ color: 'var(--ink)' }}>{title}</h2>
                 </div>
                 {items.length === 0 ? (
-                    <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                    <div className="grid gap-6 -mx-4 -mt-4 px-4 pt-4 pb-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                         <Link href={`/notes/new`}
                             className="flex flex-col items-center justify-center p-[var(--space-m)] bg-[var(--bg-card)] rounded-[var(--radius-lg)] cursor-pointer transition-all hover:border-[var(--ink-dim)] group"
                             style={{ border: '2px dashed var(--border)', minHeight: '220px' }}>
@@ -127,7 +127,7 @@ export default function HomePage() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                    <div className="grid gap-6 -mx-4 -mt-4 px-4 pt-4 pb-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                         {items.slice(0, 8).map((n, i) => renderCard(n, i))}
                     </div>
                 )}
@@ -136,20 +136,20 @@ export default function HomePage() {
     };
 
     return (
-        <div className="flex h-full w-full overflow-hidden">
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        <div className="flex h-full w-full gap-4 md:gap-5 lg:gap-6 overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white rounded-none md:rounded-[28px] lg:rounded-[32px] shadow-none md:shadow-[0_4px_32px_rgba(0,0,0,0.02)] border-none md:border border-[rgba(0,0,0,0.03)]">
                 {/* Fixed Header Section */}
-                <div className="z-20 bg-[var(--bg-app)] w-full">
+                <div className="z-20 bg-white w-full rounded-t-none md:rounded-t-[32px]">
                     <div className="max-w-7xl mx-auto w-full px-6 md:px-8 lg:px-12 pt-6 md:pt-8 lg:pt-10 mb-2">
-                        <header className="flex flex-col md:flex-row md:items-start mt-2 justify-between gap-6 mb-12 relative w-full">
+                        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative w-full">
                             <div className="flex-1 shrink-0">
                                 <h1 className="text-[32px] md:text-[40px] font-serif font-semibold tracking-tight" style={{ color: 'var(--ink)' }}>
                                     Hola there
                                 </h1>
                             </div>
 
-                            <div className="flex-1 flex justify-center w-full min-w-0 max-w-2xl mx-auto">
-                                <div className="relative w-full shadow-[0_4px_16px_rgba(0,0,0,0.03)] rounded-[var(--radius-pill)] flex items-center bg-white/60 backdrop-blur-xl border border-white/50 transition-all focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-within:border-white/80">
+                            <div className="flex-[2] max-w-xl w-full">
+                                <div className="relative w-full shadow-[0_4px_16px_rgba(0,0,0,0.03)] rounded-[var(--radius-pill)] flex items-center bg-white/60 backdrop-blur-xl border border-[var(--border-soft)] transition-all focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-within:border-[var(--border-soft)]">
                                     <div className="pl-4 text-[var(--ink-dim)]">
                                         <MagnifyingGlass size={16} weight="bold" />
                                     </div>
@@ -162,8 +162,6 @@ export default function HomePage() {
                                     />
                                 </div>
                             </div>
-
-                            <div className="flex-1 hidden md:flex justify-end shrink-0" />
                         </header>
                     </div>
                 </div>
