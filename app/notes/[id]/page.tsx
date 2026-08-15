@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useNotesStore } from '@/lib/notesStore';
 import type { Note } from '@/lib/notesStore';
+import { ArrowLeft, Star, Palette, Archive, TreeStructure, Trash, DotsThree, CircleNotch, Plus, X } from '@phosphor-icons/react';
 
 // Simple auto-tag suggestions: pick frequent capitalized words from body
 function suggestTags(body: string, existing: string[]): string[] {
@@ -131,20 +132,17 @@ export default function NoteEditorPage() {
 
     const availableColors = [
         { name: 'Default', value: undefined },
-        { name: 'Red', value: '#fee2e2' },
-        { name: 'Orange', value: '#ffedd5' },
-        { name: 'Yellow', value: '#fef9c3' },
-        { name: 'Green', value: '#dcfce7' },
-        { name: 'Blue', value: '#dbeafe' },
-        { name: 'Purple', value: '#f3e8ff' },
-        { name: 'Pink', value: '#fce7f3' },
+        { name: 'Rose', value: 'var(--bg-rose)' },
+        { name: 'Peach', value: 'var(--bg-peach)' },
+        { name: 'Sage', value: 'var(--bg-sage)' },
+        { name: 'Sky', value: 'var(--bg-sky)' },
+        { name: 'Lavender', value: 'var(--bg-lavender)' },
     ];
 
     if (!loaded) {
         return (
             <div className="flex justify-center items-center min-h-[60vh]">
-                <div className="w-5 h-5 rounded-full border-2 animate-spin"
-                    style={{ borderColor: 'var(--border)', borderTopColor: 'var(--text-2)' }} />
+                <CircleNotch size={24} className="animate-spin text-[var(--ink)] opacity-50" />
             </div>
         );
     }
@@ -152,245 +150,251 @@ export default function NoteEditorPage() {
     const words = wc(body);
 
     return (
-        <div className="max-w-[800px] mx-auto w-full px-6 sm:px-8 pb-32 pt-6 min-h-full flex flex-col" style={{ backgroundColor: color ? `${color}10` : 'transparent' }}>
+        <main className="flex-1 h-full overflow-y-auto no-scrollbar scroll-smooth">
+            <div className="max-w-[800px] mx-auto w-full px-6 sm:px-8 pb-32 pt-6 min-h-full flex flex-col transition-colors duration-500 rounded-[var(--radius-xl)] bg-transparent md:bg-white md:shadow-[0_4px_24px_rgba(62,56,56,0.05)] md:my-6 relative border border-transparent md:border-[var(--border-soft)]"
+                style={{ backgroundColor: color || 'transparent' }}>
 
-            {/* ── Toolbar ── */}
-            <div className="sticky top-0 z-40 -mx-6 px-6 sm:-mx-8 sm:px-8 py-4 flex items-center gap-3 mb-8 bg-[var(--bg)]/90 backdrop-blur-md"
-                style={{
-                    borderBottom: '1px solid var(--border-soft)',
-                }}>
+                {/* Absolute color blend layer for mobile */}
+                <div className="md:hidden fixed inset-0 -z-10 transition-colors duration-500 pointer-events-none" style={{ backgroundColor: color || 'var(--bg-app)' }} />
 
-                <button onClick={() => router.push('/notes')}
-                    className="text-[13px] transition-colors mr-1"
-                    style={{ color: 'var(--text-3)' }}>
-                    ← Notes
-                </button>
+                {/* ── Toolbar ── */}
+                <div className="sticky top-0 z-40 -mx-6 px-6 sm:-mx-8 sm:px-8 py-4 flex items-center gap-3 mb-8 bg-white/40 backdrop-blur-xl border-b border-[var(--border-soft)] rounded-t-[calc(var(--radius-xl)-1px)]">
 
-                <div className="h-4 w-px" style={{ background: 'var(--border)' }} />
+                    <button onClick={() => router.push('/notes')}
+                        className="flex items-center gap-1.5 text-[14px] font-medium transition-colors mr-1 text-[var(--ink-dim)] hover:text-[var(--ink)]">
+                        <ArrowLeft size={16} weight="bold" />
+                        Notes
+                    </button>
 
-                <button onClick={() => setPreview(p => !p)}
-                    className="px-3 py-1 rounded-lg text-[12px] font-medium transition-all"
-                    style={preview
-                        ? { background: 'var(--text-1)', color: 'var(--bg)' }
-                        : { color: 'var(--text-3)' }}>
-                    {preview ? 'Edit' : 'Preview'}
-                </button>
+                    <div className="h-4 w-px bg-[var(--border)] opacity-50" />
 
-                <div className="flex-1" />
+                    <button onClick={() => setPreview(p => !p)}
+                        className={`px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all ${preview ? 'bg-[var(--ink)] text-white shadow-md' : 'text-[var(--ink-dim)] hover:bg-white/50 hover:text-[var(--ink)]'}`}>
+                        {preview ? 'Edit' : 'Preview'}
+                    </button>
 
-                <div className="flex items-center gap-1 sm:gap-3">
-                    {words > 0 && (
-                        <span className="text-[11px] tabular-nums mr-1 sm:mr-0" style={{ color: 'var(--text-4)' }}>
-                            {words.toLocaleString()} words
-                        </span>
-                    )}
+                    <div className="flex-1" />
 
-                    <span className="text-[11px] hidden sm:inline" style={{ color: 'var(--text-4)' }}>
-                        {saving ? 'Saving…' : saved ? '✓ Saved' : ''}
-                    </span>
-
-                    {/* Desktop Actions */}
-                    <div className="hidden sm:flex items-center gap-1">
-                        {!isNew && (
-                            <button
-                                onClick={handleToggleStar}
-                                title={currentNote?.starred ? 'Unstar' : 'Star'}
-                                className={`p-2 rounded hover:bg-[var(--bg-muted)] transition-colors ${currentNote?.starred ? 'text-yellow-500' : 'text-[var(--text-4)] hover:text-[var(--text-2)]'}`}
-                            >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill={currentNote?.starred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                            </button>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        {words > 0 && (
+                            <span className="text-[12px] tabular-nums mr-2 font-medium text-[var(--ink-dim)]">
+                                {words.toLocaleString()} words
+                            </span>
                         )}
 
-                        {!isNew && (
-                            <div className="relative">
+                        <span className="text-[12px] hidden sm:inline font-medium text-[var(--ink-dim)] min-w-[50px] text-right mr-2">
+                            {saving ? 'Saving…' : saved ? '✓ Saved' : ''}
+                        </span>
+
+                        {/* Desktop Actions */}
+                        <div className="hidden sm:flex items-center gap-1">
+                            {!isNew && (
                                 <button
-                                    onClick={() => setShowColorPicker(!showColorPicker)}
-                                    title="Color Note"
-                                    className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-4)] hover:text-[var(--text-2)]"
+                                    onClick={handleToggleStar}
+                                    title={currentNote?.starred ? 'Unstar' : 'Star'}
+                                    className={`p-2.5 rounded-full transition-colors ${currentNote?.starred ? 'text-yellow-500 bg-yellow-50 font-bold hover:bg-yellow-100' : 'text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/50'}`}
                                 >
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5" /><circle cx="17.5" cy="10.5" r=".5" /><circle cx="8.5" cy="7.5" r=".5" /><circle cx="6.5" cy="12.5" r=".5" /><path d="M12 2a10 10 0 1 0 10 10c0-5.52-4.48-10-10-10z" /></svg>
+                                    <Star size={20} weight={currentNote?.starred ? "fill" : "regular"} />
                                 </button>
-                                {showColorPicker && (
-                                    <div className="absolute right-0 top-full mt-2 p-2 bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-xl shadow-lg flex gap-1 z-50">
-                                        {availableColors.map(c => (
-                                            <button
-                                                key={c.name}
-                                                title={c.name}
-                                                onClick={() => {
-                                                    setNoteColor(c.value);
-                                                    setShowColorPicker(false);
-                                                    useNotesStore.getState().setColor(currentNote!.id, c.value);
-                                                }}
-                                                className="w-6 h-6 rounded-full border border-[var(--border-soft)] hover:scale-110 transition-transform"
-                                                style={{ backgroundColor: c.value || 'var(--bg)' }}
-                                            />
-                                        ))}
-                                    </div>
+                            )}
+
+                            {!isNew && (
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowColorPicker(!showColorPicker)}
+                                        title="Background Color"
+                                        className="p-2.5 rounded-full transition-colors text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/50"
+                                    >
+                                        <Palette size={20} weight="regular" />
+                                    </button>
+                                    {showColorPicker && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setShowColorPicker(false)} />
+                                            <div className="absolute right-0 top-full mt-2 p-3 bg-white border border-[var(--border-soft)] rounded-[var(--radius-lg)] shadow-[0_12px_24px_-10px_rgba(62,56,56,0.15)] flex gap-2 z-50 animate-in fade-in slide-in-from-top-2">
+                                                {availableColors.map(c => (
+                                                    <button
+                                                        key={c.name}
+                                                        title={c.name}
+                                                        onClick={() => {
+                                                            setNoteColor(c.value);
+                                                            setShowColorPicker(false);
+                                                            useNotesStore.getState().setColor(currentNote!.id, c.value);
+                                                        }}
+                                                        className="w-8 h-8 rounded-full border border-black/5 hover:scale-110 transition-transform shadow-sm flex justify-center items-center"
+                                                        style={{ backgroundColor: c.value || '#fff' }}
+                                                    >
+                                                        {color === c.value && <div className="w-2 h-2 rounded-full bg-black/30" />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {!isNew && (
+                                <button
+                                    onClick={handleToggleArchive}
+                                    title={currentNote?.archived ? 'Unarchive' : 'Archive'}
+                                    className={`p-2.5 rounded-full transition-colors ${currentNote?.archived ? 'text-[var(--ink)] bg-[var(--bg-muted)] font-bold' : 'text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/50'}`}
+                                >
+                                    <Archive size={20} weight={currentNote?.archived ? "fill" : "regular"} />
+                                </button>
+                            )}
+
+                            {!isNew && (
+                                <Link href={`/graph/${noteId}`} title="View Graph" className="p-2.5 rounded-full transition-colors text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/50">
+                                    <TreeStructure size={20} weight="regular" />
+                                </Link>
+                            )}
+
+                            {!isNew && (
+                                <button
+                                    onClick={handleDelete}
+                                    title={currentNote?.trashed ? "Permanently Delete Note" : "Move to Trash"}
+                                    className="p-2.5 rounded-full transition-colors text-[var(--ink-dim)] hover:text-red-600 hover:bg-red-500/10 ml-1"
+                                >
+                                    <Trash size={20} weight="regular" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Mobile Actions Menu */}
+                        {!isNew && (
+                            <div className="relative sm:hidden">
+                                <button
+                                    onClick={() => setShowMobileActions(!showMobileActions)}
+                                    className="p-2 rounded-full hover:bg-white/50 transition-colors text-[var(--ink)] bg-white/40 shadow-sm border border-black/5"
+                                >
+                                    <DotsThree size={24} weight="bold" />
+                                </button>
+
+                                {showMobileActions && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setShowMobileActions(false)} />
+                                        <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[var(--border-soft)] rounded-[var(--radius-lg)] shadow-[0_12px_24px_-10px_rgba(62,56,56,0.15)] p-2 z-50 flex flex-col gap-1 animate-in fade-in slide-in-from-top-2">
+
+                                            <button onClick={() => { handleToggleStar(); setShowMobileActions(false); }}
+                                                className="flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)] text-[14px] font-medium hover:bg-[var(--bg-muted)] transition-colors">
+                                                <Star size={18} weight={currentNote?.starred ? "fill" : "bold"} className={currentNote?.starred ? 'text-yellow-500' : 'text-[var(--ink-dim)]'} />
+                                                <span style={{ color: 'var(--ink)' }}>{currentNote?.starred ? 'Unstar' : 'Star'}</span>
+                                            </button>
+
+                                            <div className="h-px bg-[var(--border-soft)] mx-2 my-1" />
+
+                                            <div className="px-4 py-3 pb-2 flex flex-col gap-2">
+                                                <span className="text-[11px] font-semibold text-[var(--ink-dim)] uppercase tracking-wider">Color Style</span>
+                                                <div className="flex flex-wrap gap-2.5">
+                                                    {availableColors.map(c => (
+                                                        <button key={c.name} onClick={() => { setNoteColor(c.value); useNotesStore.getState().setColor(currentNote!.id, c.value); setShowMobileActions(false); }}
+                                                            className="w-7 h-7 rounded-full border border-black/5 shadow-sm"
+                                                            style={{ backgroundColor: c.value || '#fff' }} />
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="h-px bg-[var(--border-soft)] mx-2 my-1" />
+
+                                            <button onClick={() => { handleToggleArchive(); setShowMobileActions(false); }}
+                                                className="flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)] text-[14px] font-medium hover:bg-[var(--bg-muted)] transition-colors">
+                                                <Archive size={18} weight={currentNote?.archived ? "fill" : "bold"} className={currentNote?.archived ? 'text-[var(--ink)]' : 'text-[var(--ink-dim)]'} />
+                                                <span style={{ color: 'var(--ink)' }}>{currentNote?.archived ? 'Unarchive' : 'Archive'}</span>
+                                            </button>
+
+                                            <Link href={`/graph/${noteId}`} className="flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)] text-[14px] font-medium hover:bg-[var(--bg-muted)] transition-colors">
+                                                <TreeStructure size={18} weight="bold" className="text-[var(--ink-dim)]" />
+                                                <span style={{ color: 'var(--ink)' }}>View Graph</span>
+                                            </Link>
+
+                                            <div className="h-px bg-[var(--border-soft)] mx-2 my-1" />
+
+                                            <button onClick={() => { handleDelete(); setShowMobileActions(false); }}
+                                                className="flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)] text-[14px] font-medium hover:bg-red-500/10 text-red-600 transition-colors">
+                                                <Trash size={18} weight="bold" />
+                                                <span>{currentNote?.trashed ? 'Delete Forever' : 'Move to Trash'}</span>
+                                            </button>
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         )}
-
-                        {!isNew && (
-                            <button
-                                onClick={handleToggleArchive}
-                                title={currentNote?.archived ? 'Unarchive' : 'Archive'}
-                                className={`p-2 rounded hover:bg-[var(--bg-muted)] transition-colors ${currentNote?.archived ? 'text-green-500' : 'text-[var(--text-4)] hover:text-[var(--text-2)]'}`}
-                            >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" /><line x1="10" y1="12" x2="14" y2="12" /></svg>
-                            </button>
-                        )}
-
-                        {!isNew && (
-                            <Link href={`/graph/${noteId}`} title="View Graph" className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-4)] hover:text-[var(--text-2)]">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
-                            </Link>
-                        )}
-
-                        {!isNew && (
-                            <button
-                                onClick={handleDelete}
-                                title={currentNote?.trashed ? "Permanently Delete Note" : "Move to Trash"}
-                                className="p-2 rounded hover:bg-red-500/10 transition-colors text-[var(--text-4)] hover:text-red-500"
-                            >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                            </button>
-                        )}
                     </div>
 
-                    {/* Mobile Actions Menu */}
-                    {!isNew && (
-                        <div className="relative sm:hidden">
-                            <button
-                                onClick={() => setShowMobileActions(!showMobileActions)}
-                                className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-2)]"
-                            >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
-                            </button>
-
-                            {showMobileActions && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setShowMobileActions(false)} />
-                                    <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1"
-                                        style={{ animation: 'panelIn 150ms cubic-bezier(.22,1,.36,1)' }}>
-
-                                        <button onClick={() => { handleToggleStar(); setShowMobileActions(false); }}
-                                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] hover:bg-[var(--bg-muted)] transition-colors">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill={currentNote?.starred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className={currentNote?.starred ? 'text-yellow-500' : 'text-[var(--text-4)]'}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                                            <span style={{ color: 'var(--text-2)' }}>{currentNote?.starred ? 'Unstar' : 'Star'}</span>
-                                        </button>
-
-                                        <div className="h-px bg-[var(--border-soft)] mx-2 my-1" />
-
-                                        <div className="px-4 py-2 flex flex-wrap gap-2">
-                                            {availableColors.map(c => (
-                                                <button key={c.name} onClick={() => { setNoteColor(c.value); useNotesStore.getState().setColor(currentNote!.id, c.value); setShowMobileActions(false); }}
-                                                    className="w-6 h-6 rounded-full border border-[var(--border-soft)]"
-                                                    style={{ backgroundColor: c.value || 'var(--bg)' }} />
-                                            ))}
-                                        </div>
-
-                                        <div className="h-px bg-[var(--border-soft)] mx-2 my-1" />
-
-                                        <button onClick={() => { handleToggleArchive(); setShowMobileActions(false); }}
-                                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] hover:bg-[var(--bg-muted)] transition-colors">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={currentNote?.archived ? 'text-green-500' : 'text-[var(--text-4)]'}><polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" /><line x1="10" y1="12" x2="14" y2="12" /></svg>
-                                            <span style={{ color: 'var(--text-2)' }}>{currentNote?.archived ? 'Unarchive' : 'Archive'}</span>
-                                        </button>
-
-                                        <Link href={`/graph/${noteId}`} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] hover:bg-[var(--bg-muted)] transition-colors">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--text-4)]"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
-                                            <span style={{ color: 'var(--text-2)' }}>View Graph</span>
-                                        </Link>
-
-                                        <div className="h-px bg-[var(--border-soft)] mx-2 my-1" />
-
-                                        <button onClick={() => { handleDelete(); setShowMobileActions(false); }}
-                                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[13px] hover:bg-red-500/10 text-red-500 transition-colors">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                                            <span>{currentNote?.trashed ? 'Delete Forever' : 'Move to Trash'}</span>
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    )}
                 </div>
 
-            </div>
-
-            {/* ── Title ── */}
-            <input
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="Note title"
-                className="w-full font-serif text-[28px] sm:text-[42px] leading-[1.1] bg-transparent border-none outline-none mb-4 placeholder-[var(--border)]"
-                style={{ color: 'var(--text-1)' }}
-            />
-
-            <div className="mb-8" style={{ height: '1px', background: 'var(--border-soft)' }} />
-
-            {/* ── Body ── */}
-            {preview ? (
-                <div className="prose-editor whitespace-pre-wrap flex-1 text-[16px] leading-[1.7]" style={{ color: 'var(--text-2)' }}>
-                    {body || <span style={{ color: 'var(--text-4)', fontStyle: 'italic' }}>Nothing to preview</span>}
-                </div>
-            ) : (
-                <textarea
-                    value={body}
-                    onChange={e => setBody(e.target.value)}
-                    placeholder="Start writing…"
-                    className="prose-editor w-full bg-transparent border-none outline-none resize-none flex-1 text-[16px] leading-[1.7] placeholder-[var(--border)]"
-                    style={{ color: 'var(--text-2)', minHeight: '60vh' }}
+                {/* ── Title ── */}
+                <input
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    placeholder="Note title"
+                    className="w-full font-serif text-[32px] sm:text-[46px] leading-[1.1] font-semibold bg-transparent border-none outline-none mb-4 placeholder-[var(--ink-light)]"
+                    style={{ color: 'var(--ink)' }}
                 />
-            )}
 
-            {/* ── Tags ── */}
-            <div className="mt-12 pt-8" style={{ borderTop: '1px solid var(--border-soft)' }}>
-                <p className="text-[11px] uppercase tracking-[0.14em] font-medium mb-3" style={{ color: 'var(--text-3)' }}>
-                    Tags
-                </p>
+                <div className="mb-8" style={{ height: '1px', background: 'var(--border-soft)' }} />
 
-                {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                        {tags.map(t => (
-                            <button key={t} onClick={() => removeTag(t)} className="tag-pill">
-                                #{t} <span style={{ opacity: 0.5 }}>×</span>
-                            </button>
-                        ))}
+                {/* ── Body ── */}
+                {preview ? (
+                    <div className="prose-editor whitespace-pre-wrap flex-1 text-[17px] leading-[1.8]" style={{ color: 'var(--ink)' }}>
+                        {body || <span style={{ color: 'var(--ink-dim)', fontStyle: 'italic' }}>Nothing to preview</span>}
                     </div>
+                ) : (
+                    <textarea
+                        value={body}
+                        onChange={e => setBody(e.target.value)}
+                        placeholder="Start writing…"
+                        className="prose-editor w-full bg-transparent border-none outline-none resize-none flex-1 text-[17px] leading-[1.8] placeholder-[var(--ink-light)]"
+                        style={{ color: 'var(--ink)', minHeight: '50vh' }}
+                    />
                 )}
 
-                <input
-                    value={tagInput}
-                    onChange={e => setTagInput(e.target.value)}
-                    onKeyDown={e => {
-                        if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
-                            e.preventDefault(); addTag(tagInput);
-                        }
-                        if (e.key === 'Backspace' && !tagInput && tags.length) {
-                            removeTag(tags[tags.length - 1]);
-                        }
-                    }}
-                    placeholder="Add tag…"
-                    className="input-base text-[12px] w-auto"
-                    style={{ maxWidth: 200 }}
-                />
+                {/* ── Tags ── */}
+                <div className="mt-12 pt-8" style={{ borderTop: '1px solid var(--border-soft)' }}>
+                    <p className="text-[12px] uppercase tracking-[0.08em] font-semibold mb-4" style={{ color: 'var(--ink-dim)' }}>
+                        Collections & Tags
+                    </p>
 
-                {autoTags.length > 0 && (
-                    <div className="mt-4">
-                        <p className="text-[11px] uppercase tracking-[0.12em] mb-2" style={{ color: 'var(--text-4)' }}>
-                            Suggestions
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                            {autoTags.map((t: string) => (
-                                <button key={t} onClick={() => addTag(t)} className="tag-pill" style={{ opacity: 0.75 }}>
-                                    + #{t}
+                    {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {tags.map(t => (
+                                <button key={t} onClick={() => removeTag(t)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/40 backdrop-blur-sm border border-black/5 text-[13px] font-medium text-[var(--ink)] hover:bg-white/60 transition-colors shadow-sm">
+                                    {t} <X size={12} weight="bold" className="opacity-50 hover:opacity-100" />
                                 </button>
                             ))}
                         </div>
-                    </div>
-                )}
+                    )}
+
+                    <input
+                        value={tagInput}
+                        onChange={e => setTagInput(e.target.value)}
+                        onKeyDown={e => {
+                            if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
+                                e.preventDefault(); addTag(tagInput);
+                            }
+                            if (e.key === 'Backspace' && !tagInput && tags.length) {
+                                removeTag(tags[tags.length - 1]);
+                            }
+                        }}
+                        placeholder="Add tag…"
+                        className="w-auto min-w-[120px] bg-white/40 backdrop-blur-sm border border-[var(--border-soft)] rounded-full px-4 py-2 text-[13px] font-medium text-[var(--ink)] placeholder-[var(--ink-dim)] outline-none focus:border-[var(--ink-dim)] transition-colors shadow-sm"
+                    />
+
+                    {autoTags.length > 0 && (
+                        <div className="mt-6">
+                            <p className="text-[12px] uppercase tracking-[0.08em] font-semibold mb-3" style={{ color: 'var(--ink-dim)' }}>
+                                Suggestions
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {autoTags.map((t: string) => (
+                                    <button key={t} onClick={() => addTag(t)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-transparent border border-[var(--border-soft)] text-[13px] font-medium text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[var(--ink-dim)] transition-colors border-dashed">
+                                        <Plus size={12} weight="bold" /> {t}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
-        </div >
+        </main>
     );
 }

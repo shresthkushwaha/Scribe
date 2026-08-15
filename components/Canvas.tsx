@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useMemo } from 'react';
 import * as d3 from 'd3';
+import { ArrowCounterClockwise } from '@phosphor-icons/react';
 import { useStore, ScribeNode, ScribeLink } from '../lib/store';
 import Note from './Note';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -114,7 +115,7 @@ export default function Canvas() {
                     className="w-12 h-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:border-white/30 transition-all"
                     title="Reset View"
                 >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
+                    <ArrowCounterClockwise size={20} weight="bold" />
                 </button>
             </div>
 
