@@ -14,11 +14,22 @@ interface NotesStore {
     moveToTrash: (id: string) => Promise<void>;
     restoreFromTrash: (id: string) => Promise<void>;
     setColor: (id: string, color: string | undefined) => Promise<void>;
+    theme: 'light' | 'dark';
+    setTheme: (theme: 'light' | 'dark') => void;
 }
 
 export const useNotesStore = create<NotesStore>((set, get) => ({
     notes: [],
     loaded: false,
+    theme: 'light',
+
+    setTheme: (theme) => {
+        set({ theme });
+        if (typeof document !== 'undefined') {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('scribe-theme', theme);
+        }
+    },
 
     load: async () => {
         if (get().loaded) return;

@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useNotesStore } from '@/lib/notesStore';
 import { DownloadSimple, UploadSimple } from '@phosphor-icons/react';
 
-export function DataMigration({ isCollapsed }: { isCollapsed: boolean }) {
+export function DataMigration() {
     const { notes, upsert } = useNotesStore();
     const mdInputRef = useRef<HTMLInputElement>(null);
     const jsonInputRef = useRef<HTMLInputElement>(null);
@@ -87,45 +87,53 @@ export function DataMigration({ isCollapsed }: { isCollapsed: boolean }) {
     };
 
     return (
-        <div className="flex flex-col gap-1 mt-6 pt-6 border-t border-[var(--border-soft)]">
-            {!isCollapsed && (
-                <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-[var(--ink-dim)] mb-2 pl-3">
-                    Data
-                </div>
-            )}
-
+        <div className="flex flex-col gap-3">
             <input type="file" accept=".md" multiple ref={mdInputRef} onChange={handleMdImport} className="hidden" />
             <input type="file" accept=".json" ref={jsonInputRef} onChange={handleJsonImport} className="hidden" />
 
-            <button
-                onClick={() => mdInputRef.current?.click()}
-                disabled={loading}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-(--radius-sm) transition-colors text-[14px] font-medium text-(--ink-dim) hover:bg-(--bg-muted) hover:text-(--ink) ${isCollapsed ? 'justify-center' : ''}`}
-                title={isCollapsed ? "Import Markdown" : undefined}
-            >
-                <UploadSimple size={18} weight="bold" />
-                {!isCollapsed && <span className="whitespace-nowrap">Import .md</span>}
-            </button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button
+                    onClick={() => mdInputRef.current?.click()}
+                    disabled={loading}
+                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border border-(--border-soft) bg-(--bg-card) transition-all hover:bg-(--bg-muted) group text-center"
+                >
+                    <div className="p-3 rounded-full bg-(--bg-lavender) text-(--ink) transition-transform group-hover:scale-110">
+                        <UploadSimple size={24} weight="bold" />
+                    </div>
+                    <div>
+                        <div className="text-[15px] font-semibold text-(--ink)">Import .md</div>
+                        <p className="text-[12px] text-(--ink-dim) mt-1">Import multiple Markdown files as notes</p>
+                    </div>
+                </button>
 
-            <button
-                onClick={handleJsonExport}
-                disabled={loading}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-(--radius-sm) transition-colors text-[14px] font-medium text-(--ink-dim) hover:bg-(--bg-muted) hover:text-(--ink) ${isCollapsed ? 'justify-center' : ''}`}
-                title={isCollapsed ? "Export JSON Backup" : undefined}
-            >
-                <DownloadSimple size={18} weight="bold" />
-                {!isCollapsed && <span className="whitespace-nowrap">Backup Library</span>}
-            </button>
+                <button
+                    onClick={handleJsonExport}
+                    disabled={loading}
+                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border border-(--border-soft) bg-(--bg-card) transition-all hover:bg-(--bg-muted) group text-center"
+                >
+                    <div className="p-3 rounded-full bg-(--bg-lavender) text-(--ink) transition-transform group-hover:scale-110">
+                        <DownloadSimple size={24} weight="bold" />
+                    </div>
+                    <div>
+                        <div className="text-[15px] font-semibold text-(--ink)">Backup Library</div>
+                        <p className="text-[12px] text-(--ink-dim) mt-1">Export your entire library as a JSON backup</p>
+                    </div>
+                </button>
 
-            <button
-                onClick={() => jsonInputRef.current?.click()}
-                disabled={loading}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-(--radius-sm) transition-colors text-[14px] font-medium text-(--ink-dim) hover:bg-(--bg-muted) hover:text-(--ink) ${isCollapsed ? 'justify-center' : ''}`}
-                title={isCollapsed ? "Restore from Backup" : undefined}
-            >
-                <UploadSimple size={18} weight="bold" />
-                {!isCollapsed && <span className="whitespace-nowrap">Restore Library</span>}
-            </button>
+                <button
+                    onClick={() => jsonInputRef.current?.click()}
+                    disabled={loading}
+                    className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border border-(--border-soft) bg-(--bg-card) transition-all hover:bg-(--bg-muted) group text-center"
+                >
+                    <div className="p-3 rounded-full bg-(--bg-lavender) text-(--ink) transition-transform group-hover:scale-110">
+                        <UploadSimple size={24} weight="bold" />
+                    </div>
+                    <div>
+                        <div className="text-[15px] font-semibold text-(--ink)">Restore Library</div>
+                        <p className="text-[12px] text-(--ink-dim) mt-1">Restore your library from a JSON backup file</p>
+                    </div>
+                </button>
+            </div>
         </div>
     );
 }

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useNotesStore } from '@/lib/notesStore';
 import type { Note } from '@/lib/notesStore';
 import { ArrowLeft, Star, Palette, Archive, TreeStructure, Trash, DotsThree, CircleNotch, Plus, X, DownloadSimple } from '@phosphor-icons/react';
+import { MobileSettingsIcon } from '@/components/MobileSettingsIcon';
 
 // Simple auto-tag suggestions: pick frequent capitalized words from body
 function suggestTags(body: string, existing: string[]): string[] {
@@ -182,12 +183,12 @@ export default function NoteEditorPage() {
     const words = wc(body);
 
     return (
-        <main className="flex-1 h-full overflow-hidden flex flex-col bg-white rounded-none md:rounded-[28px] lg:rounded-[32px] shadow-none md:shadow-[0_4px_32px_rgba(0,0,0,0.02)] border-none md:border border-[rgba(0,0,0,0.03)] transition-colors duration-500" style={{ backgroundColor: color || 'white' }}>
+        <main className="flex-1 h-full overflow-hidden flex flex-col bg-[var(--bg-card)] rounded-none md:rounded-[28px] lg:rounded-[32px] shadow-none md:shadow-[0_4px_32px_rgba(0,0,0,0.02)] border-none md:border border-[var(--border-soft)] transition-colors duration-500" style={{ backgroundColor: color || 'var(--bg-card)' }}>
             <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
                 <div className="max-w-[800px] mx-auto w-full px-6 sm:px-8 pb-32 pt-6 min-h-full flex flex-col relative">
 
                     {/* ── Toolbar ── */}
-                    <div className="sticky top-4 sm:top-6 z-40 w-full flex items-center gap-2 mb-10 bg-white/70 backdrop-blur-2xl border border-[var(--border-soft)] rounded-[24px] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.06)] px-4 py-3 mx-auto">
+                    <div className="sticky top-4 sm:top-6 z-40 w-full flex items-center gap-2 mb-10 bg-[var(--bg-card)]/70 backdrop-blur-2xl border border-[var(--border-soft)] rounded-[24px] shadow-[0_8px_32px_-8px_rgba(0,0,0,0.06)] px-4 py-3 mx-auto">
 
                         <button onClick={() => router.push('/notes')}
                             className="flex items-center gap-1.5 text-[14px] font-medium transition-colors mr-1 text-[var(--ink)] opacity-60 hover:opacity-100">
@@ -198,9 +199,11 @@ export default function NoteEditorPage() {
                         <div className="h-4 w-px bg-[var(--border)] opacity-50" />
 
                         <button onClick={() => setPreview(p => !p)}
-                            className={`px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all ${preview ? 'bg-[var(--ink)] text-white shadow-md' : 'text-[var(--ink-dim)] hover:bg-white/50 hover:text-[var(--ink)]'}`}>
+                            className={`px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all ${preview ? 'bg-[var(--ink)] text-[var(--bg-card)] shadow-md' : 'text-[var(--ink-dim)] hover:bg-[var(--bg-card)]/50 hover:text-[var(--ink)]'}`}>
                             {preview ? 'Edit' : 'Preview'}
                         </button>
+
+                        <MobileSettingsIcon />
 
                         <div className="flex-1" />
 
@@ -246,7 +249,7 @@ export default function NoteEditorPage() {
                                                                 useNotesStore.getState().setColor(currentNote!.id, c.value);
                                                             }}
                                                             className="w-8 h-8 rounded-full border border-black/5 hover:scale-110 transition-transform shadow-sm flex justify-center items-center"
-                                                            style={{ backgroundColor: c.value || '#fff' }}
+                                                            style={{ backgroundColor: c.value || 'var(--bg-card)' }}
                                                         >
                                                             {color === c.value && <div className="w-2 h-2 rounded-full bg-black/30" />}
                                                         </button>

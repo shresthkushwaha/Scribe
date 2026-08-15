@@ -1,0 +1,40 @@
+[data-theme='dark'] {
+    --ref-gradient-top: #1a1a1a;
+    --ref-gradient-bot: #262626;
+
+    --ink: #EAEAEA;
+    --ink-dim: rgba(234, 234, 234, 0.6);
+    --ink-light: rgba(234, 234, 234, 0.3);
+
+    --bg-sage: #2a3d34;
+    --bg-rose: #3d2a2a;
+    --bg-peach: #3d312a;
+    --bg-sky: #2a343d;
+    --bg-lavender: #2d2a3d;
+
+    --bg-app: #0A0A0A;
+    --bg-card: #141414;
+    --bg-muted: rgba(255, 255, 255, 0.04);
+    --bg-hover: rgba(255, 255, 255, 0.08);
+
+    --border: rgba(255, 255, 255, 0.12);
+    --border-soft: rgba(255, 255, 255, 0.06);
+
+    --shadow-md: 0 12px 24px -10px rgba(0, 0, 0, 0.5);
+
+    /* Overrides for D3 renderers and graph canvas */
+    --accent-orange-bg: #2d241e;
+    --accent-red-bg: #2d1e1e;
+
+    --tag-1: #8B4A4A;
+    --tag-2: #4A6B8B;
+    --tag-3: #4A8B5F;
+    --tag-4: #8B774A;
+
+    /* Semantic color adjustments for dark mode readability */
+    --accent-green: #4ade80;
+    --accent-amber: #fbbf24;
+    --accent-blue: #60a5fa;
+    --accent-orange: #fb923c;
+    --accent-red: #f87171;
+}

@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { House, FileText, TreeStructure, Plus } from '@phosphor-icons/react';
+import { House, FileText, TreeStructure, Plus, GearSix } from '@phosphor-icons/react';
 
 export function MobileNav() {
     const pathname = usePathname();
@@ -18,9 +18,9 @@ export function MobileNav() {
     ];
 
     return (
-        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 flex items-center justify-between px-6 py-3 rounded-full shadow-[0_4px_24px_rgba(62,56,56,0.15)] border"
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 flex items-center justify-between px-6 py-3 rounded-full shadow-[0_4px_24px_rgba(0,0,0,0.2)] border"
             style={{
-                background: 'rgba(255,255,255,0.85)',
+                background: 'var(--bg-card)',
                 backdropFilter: 'blur(12px)',
                 borderColor: 'var(--border-soft)',
             }}>
@@ -35,7 +35,7 @@ export function MobileNav() {
                     </Link>
                 );
             })}
-            <Link href="/notes/new" className="flex items-center justify-center w-11 h-11 rounded-full shadow-[0_4px_12px_rgba(62,56,56,0.2)] text-white transition-transform active:scale-95 ml-2"
+            <Link href="/notes/new" className="flex items-center justify-center w-11 h-11 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.3)] text-(--bg-card) transition-transform active:scale-95 ml-2"
                 style={{ background: 'var(--ink)' }}>
                 <Plus size={20} weight="bold" />
             </Link>
