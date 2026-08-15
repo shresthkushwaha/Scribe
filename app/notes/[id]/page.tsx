@@ -24,7 +24,7 @@ export default function NoteEditorPage() {
     const params = useParams<{ id: string }>();
     const id = params?.id;
     const router = useRouter();
-    const { notes, loaded, load, upsert, remove, toggleStar, toggleArchive, moveToTrash, restoreFromTrash } = useNotesStore();
+    const { notes, loaded, load, upsert, remove, toggleStar, toggleArchive, moveToTrash, restoreFromTrash, setColor: setStoreColor } = useNotesStore();
 
     const currentNote: Note | undefined = useMemo(() => notes.find((n: Note) => n.id === id), [notes, id]);
 
@@ -32,11 +32,12 @@ export default function NoteEditorPage() {
     const [body, setBody] = useState('');
     const [tagInput, setTagInput] = useState('');
     const [tags, setTags] = useState<string[]>([]);
-    const [color, setColor] = useState<string | undefined>();
+    const [color, setNoteColor] = useState<string | undefined>();
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [preview, setPreview] = useState(false);
     const [showColorPicker, setShowColorPicker] = useState(false);
+    const [showMobileActions, setShowMobileActions] = useState(false);
 
     // Manage noteId explicitly; crucial for new vs existing
     const isNew = id === 'new';
@@ -52,7 +53,7 @@ export default function NoteEditorPage() {
         setTitle(currentNote.title);
         setBody(currentNote.body);
         setTags(currentNote.tags);
-        setColor(currentNote.color);
+        setNoteColor(currentNote.color);
     }, [loaded, currentNote, isNew, router]);
 
     const autoTags = useMemo(() => {
@@ -218,7 +219,7 @@ export default function NoteEditorPage() {
                                                 onClick={() => {
                                                     setNoteColor(c.value);
                                                     setShowColorPicker(false);
-                                                    setColor(currentNote!.id, c.value);
+                                                    useNotesStore.getState().setColor(currentNote!.id, c.value);
                                                 }}
                                                 className="w-6 h-6 rounded-full border border-[var(--border-soft)] hover:scale-110 transition-transform"
                                                 style={{ backgroundColor: c.value || 'var(--bg)' }}
@@ -282,7 +283,7 @@ export default function NoteEditorPage() {
 
                                         <div className="px-4 py-2 flex flex-wrap gap-2">
                                             {availableColors.map(c => (
-                                                <button key={c.name} onClick={() => { setNoteColor(c.value); setColor(currentNote!.id, c.value); setShowMobileActions(false); }}
+                                                <button key={c.name} onClick={() => { setNoteColor(c.value); useNotesStore.getState().setColor(currentNote!.id, c.value); setShowMobileActions(false); }}
                                                     className="w-6 h-6 rounded-full border border-[var(--border-soft)]"
                                                     style={{ backgroundColor: c.value || 'var(--bg)' }} />
                                             ))}
