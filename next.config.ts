@@ -1,6 +1,7 @@
 import withPWA from 'next-pwa';
 // @ts-expect-error - next-pwa/cache does not include exported types
 import defaultCache from 'next-pwa/cache';
+import type { NextConfig } from 'next';
 
 const pwaConfig = withPWA({
   dest: 'public',
@@ -26,7 +27,11 @@ const pwaConfig = withPWA({
   ],
 });
 
-const nextConfig = pwaConfig({
+const baseConfig: NextConfig = {
+  turbopack: {},
+  typescript: {
+    ignoreBuildErrors: false,
+  },
   webpack: (config: any, { isServer, dev }: { isServer: boolean; dev: boolean }) => {
     if (dev) {
       config.devtool = 'cheap-module-source-map';
@@ -46,6 +51,8 @@ const nextConfig = pwaConfig({
     }
     return config;
   },
-});
+};
+
+const nextConfig = pwaConfig(baseConfig);
 
 export default nextConfig;
