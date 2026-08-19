@@ -5,6 +5,7 @@ import './globals.css';
 import { HardwareProvider } from '@/components/HardwareProvider';
 import { Sidebar } from '@/components/Sidebar';
 import { MobileNav } from '@/components/MobileNav';
+import { MainLayoutWrapper } from '@/components/MainLayoutWrapper';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -55,11 +56,9 @@ export default function RootLayout({
       <body className="antialiased bg-[var(--bg-app)] text-[var(--ink)] flex overflow-hidden w-screen h-screen" suppressHydrationWarning>
         <HardwareProvider>
           <Sidebar />
-          <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative p-0 md:p-5 md:pl-0 lg:p-6 lg:pl-0">
-            <main className="flex-1 h-full min-h-0 overflow-y-auto relative scroll-smooth">
-              {children}
-            </main>
-          </div>
+          <MainLayoutWrapper>
+            {children}
+          </MainLayoutWrapper>
           <MobileNav />
         </HardwareProvider>
       </body>

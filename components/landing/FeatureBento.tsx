@@ -21,13 +21,13 @@ export default function FeatureBento() {
             <div className="text-center max-w-3xl mx-auto mb-16">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400 mb-4 border border-orange-500/20">
                     <Sparkles className="w-3.5 h-3.5" />
-                    The Architecture of Thought
+                    How it works
                 </div>
-                <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-medium tracking-tight text-white mb-4">
-                    Built for the way your mind actually works.
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-white mb-4">
+                    A visual workspace for your ideas.
                 </h2>
-                <p className="text-white/70 text-base sm:text-lg leading-relaxed font-sans">
-                    Traditional tools trap your thinking in rigid folders and linear documents. Scribe gives your ideas visual space, hierarchy, and physical fluidity.
+                <p className="text-white/70 text-sm sm:text-base leading-relaxed font-sans">
+                    Most tools trap your thoughts in rigid folders and endless documents. Scribe lets you spread out, connect the dots, and see the big picture.
                 </p>
             </div>
 
@@ -35,31 +35,31 @@ export default function FeatureBento() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Large Card 1: Topographic Concept Mapping */}
-                <div id="oracle" className="md:col-span-2 group relative overflow-hidden rounded-[36px] border border-white/10 bg-[#13151A] p-8 md:p-10 flex flex-col justify-between hover:border-orange-500/40 hover:shadow-2xl transition-all duration-300">
+                <div id="oracle" className="md:col-span-2 group relative overflow-hidden rounded-[16px] border border-[#242728] bg-[#0d0d0d] p-8 md:p-10 flex flex-col justify-between hover:border-[#383b3d] hover:bg-[#101111] hover:shadow-none transition-all duration-300">
                     <div className="relative z-10 max-w-lg mb-8">
                         <div className="w-12 h-12 rounded-2xl bg-orange-500/15 text-orange-400 flex items-center justify-center mb-5">
                             <Layers className="w-6 h-6" />
                         </div>
-                        <h3 className="font-serif text-2xl sm:text-3xl font-medium text-white mb-3">
-                            Topographic Concept Mapping
+                        <h3 className="font-serif text-xl sm:text-2xl font-medium text-white mb-3">
+                            Visual Mind Maps
                         </h3>
                         <p className="text-white/70 text-sm sm:text-base leading-relaxed mb-6 font-sans">
-                            Model your thoughts like systems rather than static notes. Deconstruct complex projects into overarching Pillars, thematic Clusters, and granular Insights with fluid D3 physics.
+                            Stop writing long, linear documents. Break your ideas down into visual clusters and watch them organize naturally on an interactive canvas.
                         </p>
                         <div className="flex flex-wrap gap-2 text-xs font-bold font-sans">
-                            <span className="px-3 py-1 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/25">Core Pillars</span>
-                            <span className="px-3 py-1 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/25">Theme Clusters</span>
-                            <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">Atomic Insights</span>
+                            <span className="px-3 py-1 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/25">Big Ideas</span>
+                            <span className="px-3 py-1 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/25">Main Themes</span>
+                            <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">Specific Details</span>
                         </div>
                     </div>
 
                     {/* Visual Graphic Representation */}
-                    <div className="relative rounded-2xl bg-[#0D0E12] border border-white/10 p-5 overflow-hidden">
+                    <div className="relative rounded-[12px] bg-[#07080a] border border-[#242728] p-5 overflow-hidden">
                         <div className="flex items-center justify-between text-xs font-mono text-white/50 pb-3 border-b border-white/10 mb-3">
                             <span>SPATIAL_TOPOGRAPHY // CONCEPT_GRAPH</span>
                             <span className="text-orange-400 font-bold">PHYSICS ENGINE</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             {['Foundational Thesis', 'Supporting Vector', 'Actionable Step'].map((col, i) => (
                                 <div key={i} className="p-3.5 rounded-xl bg-[#181A20] border border-white/10 shadow-xs">
                                     <div className="text-[11px] font-bold uppercase tracking-wider text-orange-400 mb-2 font-mono">
@@ -76,16 +76,16 @@ export default function FeatureBento() {
                 </div>
 
                 {/* Card 2: In-Canvas Dialogue */}
-                <div id="dialogue" className="group relative overflow-hidden rounded-[36px] border border-white/10 bg-[#13151A] p-8 flex flex-col justify-between hover:border-indigo-500/40 hover:shadow-2xl transition-all duration-300">
+                <div id="dialogue" className="group relative overflow-hidden rounded-[16px] border border-[#242728] bg-[#0d0d0d] p-8 flex flex-col justify-between hover:border-[#383b3d] hover:bg-[#101111] hover:shadow-none transition-all duration-300">
                     <div>
                         <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center mb-5">
                             <MessageSquare className="w-6 h-6" />
                         </div>
-                        <h3 className="font-serif text-2xl font-medium text-white mb-3">
-                            In-Canvas Exploration
+                        <h3 className="font-serif text-xl sm:text-2xl font-medium text-white mb-3">
+                            Chat with your Notes
                         </h3>
                         <p className="text-white/70 text-sm leading-relaxed mb-6 font-sans">
-                            Converse with your research directly inside your maps. Stress-test arguments, expand hypotheses, and pull thoughts directly onto the canvas as linked nodes.
+                            Talk to your research directly inside your visual map. Ask questions, brainstorm new ideas, and easily drag those thoughts right onto the canvas.
                         </p>
                     </div>
 
@@ -102,16 +102,16 @@ export default function FeatureBento() {
                 </div>
 
                 {/* Card 3: Your Studio, Your Keys */}
-                <div id="privacy" className="group relative overflow-hidden rounded-[36px] border border-white/10 bg-[#13151A] p-8 flex flex-col justify-between hover:border-emerald-500/40 hover:shadow-2xl transition-all duration-300">
+                <div id="privacy" className="group relative overflow-hidden rounded-[16px] border border-[#242728] bg-[#0d0d0d] p-8 flex flex-col justify-between hover:border-[#383b3d] hover:bg-[#101111] hover:shadow-none transition-all duration-300">
                     <div>
                         <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-5">
                             <KeyRound className="w-6 h-6" />
                         </div>
-                        <h3 className="font-serif text-2xl font-medium text-white mb-3">
-                            Your Studio, Your Keys
+                        <h3 className="font-serif text-xl sm:text-2xl font-medium text-white mb-3">
+                            100% Private & Secure
                         </h3>
                         <p className="text-white/70 text-sm leading-relaxed mb-6 font-sans">
-                            100% Client-Side Privacy. Zero subscriptions or database lock-in. Connect your own preferred API keys, or work entirely offline with local Ollama & LM Studio.
+                            Your data never leaves your device. Connect your own AI accounts or use local, offline AI models for completely private work.
                         </p>
                     </div>
 
@@ -122,16 +122,16 @@ export default function FeatureBento() {
                 </div>
 
                 {/* Card 4: Cross-Note Archipelagos */}
-                <div className="md:col-span-2 group relative overflow-hidden rounded-[36px] border border-white/10 bg-[#13151A] p-8 md:p-10 flex flex-col justify-between hover:border-purple-500/40 hover:shadow-2xl transition-all duration-300">
+                <div className="md:col-span-2 group relative overflow-hidden rounded-[16px] border border-[#242728] bg-[#0d0d0d] p-8 md:p-10 flex flex-col justify-between hover:border-[#383b3d] hover:bg-[#101111] hover:shadow-none transition-all duration-300">
                     <div className="max-w-lg mb-8">
                         <div className="w-12 h-12 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center mb-5">
                             <Compass className="w-6 h-6" />
                         </div>
-                        <h3 className="font-serif text-2xl sm:text-3xl font-medium text-white mb-3">
-                            Cross-Note Archipelagos
+                        <h3 className="font-serif text-xl sm:text-2xl font-medium text-white mb-3">
+                            Connect the Dots
                         </h3>
                         <p className="text-white/70 text-sm sm:text-base leading-relaxed font-sans">
-                            Select any combination of notes and let Scribe synthesize them into a coherent visual archipelago. Uncover latent patterns, paradoxes, and unseen dependencies across your research.
+                            Select a group of notes and let the AI find the connections between them automatically. Discover hidden patterns and new ideas you might have missed.
                         </p>
                     </div>
 

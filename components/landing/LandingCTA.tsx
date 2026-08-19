@@ -4,9 +4,7 @@ import React, { useState, Suspense, lazy, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Compass } from 'lucide-react';
 
-const Dithering = lazy(() =>
-  import('@paper-design/shaders-react').then((mod) => ({ default: mod.Dithering }))
-);
+import GradientBarsBackground from '@/components/ui/gradient-bars-background';
 
 interface LandingCTAProps {
   onOpenWaitlist: () => void;
@@ -37,44 +35,19 @@ export default function LandingCTA({ onOpenWaitlist, onGetStarted }: LandingCTAP
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="relative overflow-hidden rounded-[40px] md:rounded-[48px] border border-white/10 bg-[#121316] shadow-2xl min-h-[520px] md:min-h-[560px] flex flex-col items-center justify-center transition-all duration-500">
-          
-          {/* Dynamic Dithering Background */}
-          {isMounted && (
-            <Suspense fallback={<div className="absolute inset-0 bg-orange-500/5 backdrop-blur-2xl" />}>
-              <div className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-screen transition-opacity duration-700">
-                <Dithering
-                  colorBack="#00000000" // Transparent
-                  colorFront="#EC4E02"  // Accent
-                  shape="warp"
-                  type="4x4"
-                  speed={isHovered ? 0.6 : 0.2}
-                  className="size-full"
-                  minPixelRatio={1}
-                />
-              </div>
-            </Suspense>
-          )}
-
-          <div className="relative z-10 px-6 max-w-4xl mx-auto text-center flex flex-col items-center py-10">
-            
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-500/25 bg-orange-500/10 px-4 py-1.5 text-xs font-bold text-orange-400 backdrop-blur-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-              </span>
-              <span>Personal Knowledge Studio</span>
-            </div>
+        <div className="relative overflow-hidden rounded-[16px] border border-[#242728] bg-[#0d0d0d] shadow-none flex flex-col items-center justify-center transition-all duration-500">
+          <GradientBarsBackground numBars={10} gradientFrom="#ffffff" backgroundColor="transparent">
+            <div className="relative z-10 px-6 max-w-4xl mx-auto text-center flex flex-col items-center py-20">
 
             {/* Headline */}
-            <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-medium tracking-tight text-white mb-6 leading-[1.08]">
-              Write, structure, and explore <br />
-              <span className="text-white/70 italic">without boundaries.</span>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-white mb-6 leading-[1.08]">
+              Write and organize <br />
+              <span className="text-white/70 italic">your ideas freely.</span>
             </h2>
             
             {/* Description */}
-            <p className="text-white/70 text-base md:text-lg max-w-xl mb-10 leading-relaxed font-sans">
-              No subscriptions. No locked cloud databases. A fast, private visual canvas built for depth and thoughtful craftsmanship.
+            <p className="text-white/70 text-sm md:text-base max-w-xl mb-10 leading-relaxed font-sans">
+              No subscriptions. No locked cloud databases. A fast, private visual canvas built for your thoughts.
             </p>
 
             {/* Buttons */}
@@ -82,22 +55,23 @@ export default function LandingCTA({ onOpenWaitlist, onGetStarted }: LandingCTAP
               <Link
                 href="/notes"
                 onClick={handleStart}
-                className="group relative inline-flex h-14 w-full sm:w-auto items-center justify-center gap-3 overflow-hidden rounded-full bg-[#EC4E02] px-10 text-base font-bold text-white transition-all duration-300 hover:bg-[#d84400] hover:scale-105 active:scale-95 shadow-xl shadow-orange-500/25"
+                className="group relative inline-flex h-14 w-full sm:w-auto items-center justify-center gap-3 overflow-hidden rounded-[8px] bg-[#ffffff] px-10 text-base font-bold text-black transition-all duration-300 hover:bg-[#e0e0e0] hover:scale-105 active:scale-95 shadow-none"
               >
                 <span className="relative z-10">Start Typing</span>
-                <ArrowRight className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
+                <ArrowRight className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:translate-x-1 text-black" />
               </Link>
 
               <button
                 onClick={onOpenWaitlist}
-                className="inline-flex h-14 w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md px-8 text-base font-semibold text-white hover:bg-white/10 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                className="inline-flex h-14 w-full sm:w-auto items-center justify-center gap-2 rounded-[8px] border border-[#242728] bg-[#0d0d0d] px-8 text-base font-semibold text-[#cdcdcd] hover:text-white hover:bg-[#101111] transition-all hover:scale-105 active:scale-95 shadow-none"
               >
                 <Compass className="w-4 h-4 text-orange-400" />
                 <span>Join Waitlist</span>
               </button>
             </div>
 
-          </div>
+            </div>
+          </GradientBarsBackground>
         </div>
       </div>
     </section>

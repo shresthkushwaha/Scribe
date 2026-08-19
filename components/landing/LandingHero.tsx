@@ -4,9 +4,7 @@ import React, { useState, Suspense, lazy, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Shield, Compass } from 'lucide-react';
 
-const Dithering = lazy(() =>
-  import('@paper-design/shaders-react').then((mod) => ({ default: mod.Dithering }))
-);
+import GradientBarsBackground from '@/components/ui/gradient-bars-background';
 
 interface LandingHeroProps {
   onOpenWaitlist: () => void;
@@ -31,55 +29,22 @@ export default function LandingHero({ onOpenWaitlist, onGetStarted }: LandingHer
   };
 
   return (
-    <section className="pt-28 pb-16 md:pt-24 md:pb-12 w-full flex justify-center items-center px-4 md:px-6">
-      <div
-        className="w-full max-w-7xl relative"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <div className="relative overflow-hidden rounded-[40px] md:rounded-[44px] border border-white/10 bg-[#121316] shadow-2xl min-h-[580px] md:min-h-[520px] flex flex-col items-center justify-center transition-all duration-500">
-          
-          {/* Dynamic Dithering Background */}
-          {isMounted && (
-            <Suspense fallback={<div className="absolute inset-0 bg-orange-500/5 backdrop-blur-2xl" />}>
-              <div className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-screen transition-opacity duration-700">
-                <Dithering
-                  colorBack="#00000000" // Transparent
-                  colorFront="#EC4E02"  // Scribe Accent
-                  shape="warp"
-                  type="4x4"
-                  speed={isHovered ? 0.6 : 0.2}
-                  className="size-full"
-                  minPixelRatio={1}
-                />
-              </div>
-            </Suspense>
-          )}
-
-          {/* Ambient Warm Glow */}
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
+    <GradientBarsBackground numBars={15} gradientFrom="#EC4E02" backgroundColor="#07080a">
+      <div className="w-full max-w-7xl relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+        <div className="relative flex flex-col items-center justify-center transition-all duration-500 min-h-[400px] md:min-h-[520px]">
 
           {/* Center Content */}
           <div className="relative z-10 px-6 max-w-4xl mx-auto text-center flex flex-col items-center py-12 md:py-12">
             
-            {/* Minimal Status Badge */}
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-orange-500/25 bg-orange-500/10 px-4 py-1.5 text-xs md:text-sm font-semibold text-orange-400 backdrop-blur-md shadow-xs">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-              </span>
-              <span>Spatial Writing & Knowledge Studio</span>
-            </div>
-
             {/* Headline */}
-            <h1 className="font-serif text-5xl sm:text-6xl md:text-6xl lg:text-7xl font-medium tracking-tight text-white mb-8 leading-[1.05]">
-              Your words, <br />
-              <span className="text-white/70 italic">delivered perfectly.</span>
+            <h1 className="font-serif text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-medium tracking-tight text-white mb-6 leading-[1.05]">
+              Map complex ideas. <br />
+              <span className="text-white/70 italic">Build better strategies.</span>
             </h1>
             
             {/* Description */}
-            <p className="text-white/70 text-lg md:text-lg max-w-2xl mb-10 leading-relaxed font-sans">
-              Join founders, researchers, and systems thinkers using a distraction-free studio designed for clarity. Map complex ideas, see unseen connections, and write with depth.
+            <p className="text-white/70 text-base md:text-lg max-w-2xl mb-10 leading-relaxed font-sans">
+              A visual workspace to connect your thoughts, test your ideas, and see the big picture. Escape the limits of traditional documents.
             </p>
 
             {/* Buttons */}
@@ -102,15 +67,9 @@ export default function LandingHero({ onOpenWaitlist, onGetStarted }: LandingHer
               </button>
             </div>
 
-            {/* Trust Proof */}
-            <div className="mt-10 flex items-center gap-2 text-xs font-medium text-white/50">
-              <Shield className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-              <span>100% Client-Side Private • Zero Cloud Lock-in • Markdown Native</span>
-            </div>
-
           </div>
         </div>
       </div>
-    </section>
+    </GradientBarsBackground>
   );
 }

@@ -20,45 +20,40 @@ export default function LandingNav({ onOpenWaitlist, onGetStarted }: LandingNavP
     };
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-4 bg-[#0A0A0A]/85 backdrop-blur-xl border-b border-white/10">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-[1040px] px-3 py-2 bg-[#0d0d0d] border border-[#242728] rounded-[12px] shadow-2xl">
+            <div className="max-w-7xl mx-auto flex items-center justify-between relative">
                 
-                {/* Brand Logo & Beta Tag */}
+                {/* Brand Logo */}
                 <div className="flex items-center gap-3">
-                    <Link href="/landing" className="flex items-center gap-2.5 group">
-                        <img src="/logo-no-bg.svg" alt="Scribe Logo" className="w-7 h-7 object-contain transition-transform group-hover:scale-110" />
-                        <span className="font-serif text-2xl font-semibold text-white tracking-tight">
+                    <Link href="/landing" className="flex items-center gap-2 group">
+                        <img src="/logo-no-bg.svg" alt="Scribe Logo" className="w-4 h-4 object-contain transition-transform group-hover:scale-110" />
+                        <span className="font-sans text-[15px] font-semibold text-white tracking-tight">
                             Scribe
                         </span>
                     </Link>
-
-                    <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-orange-500/20 bg-orange-500/10 text-orange-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                        Beta v2.4
-                    </div>
                 </div>
 
                 {/* Nav Links */}
-                <nav className="hidden md:flex items-center gap-8 text-[14px] font-medium text-white/60">
-                    <a href="#features" className="hover:text-white transition-colors">
-                        Thinking in Space
+                <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-6 text-[13px] font-medium text-[#8c8c8c]">
+                    <a href="#features" className="hover:text-[#cdcdcd] transition-colors">
+                        Features
                     </a>
-                    <a href="#oracle" className="hover:text-white transition-colors">
-                        Concept Maps
+                    <a href="#privacy" className="hover:text-[#cdcdcd] transition-colors">
+                        Security
                     </a>
-                    <a href="#dialogue" className="hover:text-white transition-colors">
-                        In-Canvas Dialogue
+                    <a href="#pricing" className="hover:text-[#cdcdcd] transition-colors">
+                        Pricing
                     </a>
-                    <a href="#privacy" className="hover:text-white transition-colors">
-                        Privacy & Keys
+                    <a href="#faq" className="hover:text-[#cdcdcd] transition-colors">
+                        FAQ
                     </a>
                 </nav>
 
                 {/* CTAs */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     <button
                         onClick={onOpenWaitlist}
-                        className="hidden sm:inline-flex px-4 py-2 rounded-full text-[13px] font-semibold text-white/80 hover:text-white hover:bg-white/5 border border-white/10 transition-colors"
+                        className="hidden sm:inline-flex text-[13px] font-medium text-[#8c8c8c] hover:text-[#cdcdcd] transition-colors"
                     >
                         Join Waitlist
                     </button>
@@ -66,10 +61,10 @@ export default function LandingNav({ onOpenWaitlist, onGetStarted }: LandingNavP
                     <Link
                         href="/notes"
                         onClick={handleStart}
-                        className="group inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-[13px] font-bold bg-[#EC4E02] text-white hover:bg-[#d84400] active:scale-95 transition-all shadow-lg shadow-orange-500/20"
+                        className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[13px] font-semibold bg-[#ffffff] text-black hover:bg-[#e0e0e0] active:scale-95 transition-all shadow-none"
                     >
                         <span>Open Beta</span>
-                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform text-black" />
                     </Link>
                 </div>
             </div>
