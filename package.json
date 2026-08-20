@@ -11,6 +11,8 @@
   "dependencies": {
     "@paper-design/shaders-react": "^0.0.80",
     "@phosphor-icons/react": "^2.1.10",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.3",
     "@tldraw/tldraw": "^4.5.4",
     "@types/d3": "^7.4.3",
     "@types/uuid": "^10.0.0",
