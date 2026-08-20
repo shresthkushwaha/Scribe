@@ -10,6 +10,7 @@ import { extractTextFromFile } from '@/lib/documentUtils';
 import { v4 as uuidv4 } from 'uuid';
 import BYOKModal from './BYOKModal';
 import { useBYOKStore } from '@/lib/byokStore';
+import { createClient } from '@/lib/supabase/browser';
 
 function SidebarContent() {
     const pathname = usePathname();
@@ -21,8 +22,14 @@ function SidebarContent() {
     const [isBYOKOpen, setIsBYOKOpen] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+    const [user, setUser] = useState<any>(null);
+
     useEffect(() => {
         loadBYOK();
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            setUser(user);
+        });
     }, [loadBYOK]);
 
     const activeBYOKKey = config.keys.find(k => k.id === config.activeKeyId);
@@ -246,6 +253,24 @@ function SidebarContent() {
                     <Plus size={18} weight="bold" />
                     {!isCollapsed && 'New Note'}
                 </Link>
+
+                {user && (
+                    <div className={`flex items-center gap-3 mt-2 rounded-md transition-all ${isCollapsed ? 'justify-center p-2' : 'p-3 bg-[var(--bg-muted)] border border-[var(--border-soft)]'}`} title={isCollapsed ? user.email : undefined}>
+                        {user.user_metadata?.avatar_url ? (
+                            <img src={user.user_metadata.avatar_url} alt="Profile" className="w-8 h-8 rounded-full flex-shrink-0 border border-[var(--border-soft)]" />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0">
+                                {user.email?.[0]?.toUpperCase()}
+                            </div>
+                        )}
+                        {!isCollapsed && (
+                            <div className="flex flex-col overflow-hidden">
+                                <span className="text-[13px] font-semibold truncate text-[var(--ink)]">{user.user_metadata?.full_name || user.email?.split('@')[0]}</span>
+                                <span className="text-[11px] text-[var(--ink-dim)] truncate">{user.email}</span>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             <BYOKModal 

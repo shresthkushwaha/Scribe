@@ -58,12 +58,6 @@ export default function LandingNav({ onOpenWaitlist, onGetStarted }: LandingNavP
 
                 {/* CTAs */}
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={onOpenWaitlist}
-                        className="hidden sm:inline-flex text-[13px] font-medium text-[#8c8c8c] hover:text-[#cdcdcd] transition-colors"
-                    >
-                        Join Waitlist
-                    </button>
 
                     <button
                         onClick={handleGoogleSignIn}
