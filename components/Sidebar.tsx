@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useNotesStore, Note } from '@/lib/notesStore';
 import { DataMigration } from './DataMigration';
-import { FileText, Star, Archive, Trash, Plus, Hash, CaretLeft, CaretRight, Sun, Moon, FilePdf, FileArrowUp, CircleNotch, Gear, TreeStructure, Key, Compass } from '@phosphor-icons/react';
+import { FileText, Star, Archive, Trash, Plus, Hash, CaretLeft, CaretRight, Sun, Moon, FilePdf, FileArrowUp, CircleNotch, Gear, TreeStructure, Key, Compass, UploadSimple } from '@phosphor-icons/react';
 import { extractTextFromFile } from '@/lib/documentUtils';
 import { v4 as uuidv4 } from 'uuid';
 import BYOKModal from './BYOKModal';
@@ -23,6 +23,7 @@ function SidebarContent() {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const [user, setUser] = useState<any>(null);
+    const [showProfileInfo, setShowProfileInfo] = useState(false);
 
     useEffect(() => {
         loadBYOK();
@@ -127,20 +128,45 @@ function SidebarContent() {
                 padding: isCollapsed ? 'var(--space-l) var(--space-xs)' : 'var(--space-l) var(--space-m)'
             }}
         >
-            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} mb-[var(--space-xl)] relative group`}>
-                {!isCollapsed && (
-                    <Link href="/" className="flex items-center gap-2">
-                        <img src="/logo-no-bg.svg" alt="Scribe" className="w-6 h-6 object-contain" />
-                        <span className="font-serif text-[24px] font-semibold text-[var(--ink)] tracking-tight">
-                            Scribe
-                        </span>
-                    </Link>
-                )}
-                {isCollapsed && (
-                    <Link href="/" className="mx-auto block">
-                        <img src="/logo-no-bg.svg" alt="Scribe" className="w-7 h-7 object-contain" />
-                    </Link>
-                )}
+            <div className={`flex items-center ${isCollapsed ? 'justify-center flex-col gap-4' : 'justify-between'} mb-[var(--space-xl)] relative group`}>
+                <div className="flex items-center gap-3">
+                    {!isCollapsed && (
+                        <Link href="/" className="flex items-center gap-2">
+                            <img src="/logo-no-bg.svg" alt="Scribe" className="w-6 h-6 object-contain" />
+                            <span className="font-serif text-[24px] font-semibold text-[var(--ink)] tracking-tight">
+                                Scribe
+                            </span>
+                        </Link>
+                    )}
+                    {isCollapsed && (
+                        <Link href="/" className="mx-auto block">
+                            <img src="/logo-no-bg.svg" alt="Scribe" className="w-7 h-7 object-contain" />
+                        </Link>
+                    )}
+
+                    {/* Profile Toggle */}
+                    {user && !isCollapsed && (
+                        <div className="relative flex items-center">
+                            <button onClick={() => setShowProfileInfo(!showProfileInfo)} className="relative flex items-center justify-center hover:opacity-80 transition-opacity ml-1">
+                                {user.user_metadata?.avatar_url ? (
+                                    <img src={user.user_metadata.avatar_url} alt="Profile" className="w-6 h-6 rounded-full border border-[var(--border-soft)]" />
+                                ) : (
+                                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-[10px]">
+                                        {user.email?.[0]?.toUpperCase()}
+                                    </div>
+                                )}
+                            </button>
+                            {showProfileInfo && (
+                                <div className="absolute top-8 left-0 bg-[var(--bg-card)] border border-[var(--border-soft)] p-3 rounded-md shadow-xl z-50 min-w-[160px]">
+                                    <div className="flex flex-col">
+                                        <span className="text-[13px] font-semibold text-[var(--ink)] truncate">{user.user_metadata?.full_name || user.email?.split('@')[0]}</span>
+                                        <span className="text-[11px] text-[var(--ink-dim)] truncate">{user.email}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className={`absolute ${isCollapsed ? '-right-6 top-1' : '-right-[40px] top-1'} p-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-soft)] text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100 shadow-sm`}
@@ -240,8 +266,8 @@ function SidebarContent() {
                     className={`flex justify-center items-center gap-2 p-3 w-full rounded-md text-[13px] font-semibold transition-all border border-(--border-soft) bg-(--bg-card) text-(--ink) hover:bg-(--bg-muted) shadow-sm ${isCollapsed ? 'px-0' : ''}`}
                     title={isCollapsed ? "Upload Document" : undefined}
                 >
-                    {isUploading ? <CircleNotch size={18} className="animate-spin" /> : <FileArrowUp size={18} weight="bold" className="text-blue-500" />}
-                    {!isCollapsed && (isUploading ? 'Extracting...' : 'Upload Doc')}
+                    {isUploading ? <CircleNotch size={18} className="animate-spin" /> : <UploadSimple size={18} weight="bold" className="text-blue-500" />}
+                    {!isCollapsed && (isUploading ? 'Extracting...' : 'Upload File')}
                 </button>
 
                 <Link
@@ -254,23 +280,7 @@ function SidebarContent() {
                     {!isCollapsed && 'New Note'}
                 </Link>
 
-                {user && (
-                    <div className={`flex items-center gap-3 mt-2 rounded-md transition-all ${isCollapsed ? 'justify-center p-2' : 'p-3 bg-[var(--bg-muted)] border border-[var(--border-soft)]'}`} title={isCollapsed ? user.email : undefined}>
-                        {user.user_metadata?.avatar_url ? (
-                            <img src={user.user_metadata.avatar_url} alt="Profile" className="w-8 h-8 rounded-full flex-shrink-0 border border-[var(--border-soft)]" />
-                        ) : (
-                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                                {user.email?.[0]?.toUpperCase()}
-                            </div>
-                        )}
-                        {!isCollapsed && (
-                            <div className="flex flex-col overflow-hidden">
-                                <span className="text-[13px] font-semibold truncate text-[var(--ink)]">{user.user_metadata?.full_name || user.email?.split('@')[0]}</span>
-                                <span className="text-[11px] text-[var(--ink-dim)] truncate">{user.email}</span>
-                            </div>
-                        )}
-                    </div>
-                )}
+
             </div>
 
             <BYOKModal 
