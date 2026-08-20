@@ -6,6 +6,7 @@ import { HardwareProvider } from '@/components/HardwareProvider';
 import { Sidebar } from '@/components/Sidebar';
 import { MobileNav } from '@/components/MobileNav';
 import { MainLayoutWrapper } from '@/components/MainLayoutWrapper';
+import { Analytics } from '@vercel/analytics/next';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -61,6 +62,7 @@ export default function RootLayout({
           </MainLayoutWrapper>
           <MobileNav />
         </HardwareProvider>
+        <Analytics />
       </body>
     </html>
   );
