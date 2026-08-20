@@ -4,19 +4,26 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
+import { createClient } from '@/lib/supabase/browser';
+
 interface LandingNavProps {
     onOpenWaitlist: () => void;
     onGetStarted?: () => void;
 }
 
 export default function LandingNav({ onOpenWaitlist, onGetStarted }: LandingNavProps) {
-    const handleStart = () => {
+    const handleGoogleSignIn = async () => {
         try {
             localStorage.setItem('scribe_visited', 'true');
         } catch {}
-        if (onGetStarted) {
-            onGetStarted();
-        }
+        
+        const supabase = createClient();
+        await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback?next=/notes`,
+            },
+        });
     };
 
     return (
@@ -58,14 +65,13 @@ export default function LandingNav({ onOpenWaitlist, onGetStarted }: LandingNavP
                         Join Waitlist
                     </button>
 
-                    <Link
-                        href="/notes"
-                        onClick={handleStart}
+                    <button
+                        onClick={handleGoogleSignIn}
                         className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[13px] font-semibold bg-[#ffffff] text-black hover:bg-[#e0e0e0] active:scale-95 transition-all shadow-none"
                     >
                         <span>Open Beta</span>
                         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform text-black" />
-                    </Link>
+                    </button>
                 </div>
             </div>
         </header>

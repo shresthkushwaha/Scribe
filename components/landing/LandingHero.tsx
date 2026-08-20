@@ -26,7 +26,7 @@ export default function LandingHero({ onOpenWaitlist, onGetStarted }: LandingHer
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/graph`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/notes`,
       },
     });
   };
