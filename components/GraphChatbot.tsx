@@ -18,6 +18,8 @@ interface GraphChatbotProps {
     existingNodes: Array<{ id: string; label: string; [key: string]: any }>;
     activeNode?: { id: string; label: string } | null;
     onInjectGraphData: (payload: ExtractedGraphPayload, userPrompt?: string) => void;
+    open?: boolean;
+    onOpenChange?: (isOpen: boolean) => void;
 }
 
 const QUICK_PROMPTS = [
@@ -33,8 +35,16 @@ export default function GraphChatbot({
     existingNodes = [],
     activeNode = null,
     onInjectGraphData,
+    open,
+    onOpenChange,
 }: GraphChatbotProps) {
-    const [isOpen, setIsOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isOpen = open !== undefined ? open : internalOpen;
+    
+    const setIsOpen = (val: boolean) => {
+        setInternalOpen(val);
+        onOpenChange?.(val);
+    };
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<ChatMessage[]>([
         {
@@ -303,7 +313,7 @@ export default function GraphChatbot({
             {/* ── Floating Trigger Button ── */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-full font-bold text-[13px] shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all hover:scale-105 active:scale-95 ${
+                className={`hidden md:flex items-center gap-2 px-4 py-3 rounded-full font-bold text-[13px] shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all hover:scale-105 active:scale-95 ${
                     isOpen
                         ? 'bg-[var(--bg-card)] text-[var(--ink)] border border-[var(--border-soft)]'
                         : 'bg-[var(--ink)] text-[var(--bg-card)]'

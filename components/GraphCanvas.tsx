@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 import { 
     ArrowLeft, X, TreeStructure, MagicWand, Sparkle, CircleNotch, 
-    ArrowsClockwise, Lightning, Ghost, Quotes, Selection, Warning, Graph, Compass
+    ArrowsClockwise, Lightning, Ghost, Quotes, Selection, Warning, Graph, Compass, List
 } from '@phosphor-icons/react';
 import { useScribeV2Store } from '@/lib/store/scribeV2Store';
 import {
@@ -87,6 +87,9 @@ export default function GraphCanvas({
     const [isMutating, setIsMutating] = useState(false);
     const [strategistMessages, setStrategistMessages] = useState<any[]>([]);
     const [isStrategistExecuting, setIsStrategistExecuting] = useState(false);
+    
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isGraphChatOpen, setIsGraphChatOpen] = useState(false);
 
     // Persistence: Load history on mount
     useEffect(() => {
@@ -705,14 +708,16 @@ export default function GraphCanvas({
 
     return (
         <div className="fixed! inset-0! w-screen! h-screen! overflow-hidden z-2000 graph-page" style={{ background: 'var(--tactical-bg)' }}>
-            <div className="absolute top-4 left-4 right-4 z-1000 h-14 flex items-center gap-3 px-6 rounded-2xl tactical-glass transition-all duration-500 border border-white/20 shadow-2xl">
+            <div className="absolute top-4 left-4 right-4 z-1000 h-14 flex items-center justify-between md:gap-3 px-4 md:px-6 rounded-2xl tactical-glass transition-all duration-500 border border-white/20 shadow-2xl">
                 {backHref && (
                     <Link href={backHref} className="graph-back-btn flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest mr-2 shrink-0">
-                        <ArrowLeft size={16} weight="bold" /> Back
+                        <ArrowLeft size={16} weight="bold" /> <span className="hidden md:inline">Back</span>
                     </Link>
                 )}
-                <div className="w-px h-4 bg-white/20 mx-1 shrink-0" />
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1 shrink-0 ml-auto">
+                <div className="hidden md:block w-px h-4 bg-white/20 mx-1 shrink-0" />
+                
+                {/* Desktop menu */}
+                <div className="hidden md:flex items-center gap-2 overflow-x-auto scrollbar-hide py-1 shrink-0 ml-auto">
                     {activeAiLens && (
                         <button 
                             onClick={() => handleTriggerAi(activeAiLens, true)} 
@@ -746,7 +751,82 @@ export default function GraphCanvas({
                         Export MD
                     </button>
                 </div>
+
+                {/* Mobile Hamburger */}
+                <button 
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="md:hidden p-2 text-white/80 hover:text-white flex items-center justify-center ml-auto transition-colors"
+                >
+                    <List size={24} weight="bold" />
+                </button>
             </div>
+
+            {/* Mobile Drawer */}
+            {isMobileMenuOpen && (
+                <div className="md:hidden fixed inset-0 z-[3000] bg-black/80 backdrop-blur-sm flex justify-end">
+                    <div className="w-64 h-full bg-[var(--tactical-bg)] border-l border-white/20 flex flex-col slide-in-from-right animate-in duration-300 relative">
+                        <div className="flex items-center justify-between p-4 border-b border-white/10">
+                            <span className="text-white font-bold tracking-widest uppercase text-[11px]">Menu</span>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-white/60 hover:text-white rounded-full">
+                                <X size={20} weight="bold" />
+                            </button>
+                        </div>
+                        <div className="flex flex-col p-4 gap-6 overflow-y-auto">
+                            <div className="flex flex-col gap-2">
+                                <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1">Copilot</span>
+                                <button 
+                                    onClick={() => {
+                                        setIsGraphChatOpen(true);
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                    className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-[12px] hover:bg-white/10 transition-all text-left"
+                                >
+                                    <Sparkle size={16} weight="fill" className="text-amber-400" />
+                                    Graph Chat
+                                </button>
+                            </div>
+                            
+                            <div className="flex flex-col gap-2">
+                                <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1">AI Lenses</span>
+                                {activeAiLens && (
+                                    <button 
+                                        onClick={() => { handleTriggerAi(activeAiLens, true); setIsMobileMenuOpen(false); }} 
+                                        disabled={isSynthesizing}
+                                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-600 font-bold text-[12px] text-left"
+                                    >
+                                        <ArrowsClockwise size={16} weight="bold" className={isSynthesizing ? 'animate-spin' : ''} />
+                                        Regenerate
+                                    </button>
+                                )}
+                                {Object.entries(AI_LENS_CONFIGS).map(([key, cfg]) => {
+                                    const isActive = activeAiLens === key;
+                                    return (
+                                        <button key={key} onClick={() => { handleTriggerAi(key); setIsMobileMenuOpen(false); }} disabled={isSynthesizing && !isActive}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 font-bold text-[12px] text-left
+                                                ${isActive ? 'bg-white text-black border-white shadow-xl' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}>
+                                            {isSynthesizing && isActive ? (
+                                                <CircleNotch size={16} weight="bold" className="animate-spin" />
+                                            ) : isActive ? (
+                                                LENS_ICON_MAP[key] ?? <Sparkle size={16} weight="fill" />
+                                            ) : (
+                                                LENS_ICON_MAP[key] ?? <Sparkle size={16} weight="regular" />
+                                            )}
+                                            {cfg.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            
+                            <div className="flex flex-col gap-2">
+                                <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1">Actions</span>
+                                <button onClick={() => { exportGraphToMarkdown(); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-[12px] hover:bg-white/10 transition-all text-left">
+                                    Export MD
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="w-full h-full relative z-0">
                 {activeAiLens === 'oracle' ? (
@@ -874,6 +954,8 @@ export default function GraphCanvas({
                 existingNodes={displayNodes}
                 activeNode={activeNode ? { id: activeNode.id, label: activeNode.label } : null}
                 onInjectGraphData={handleInjectChatGraph}
+                open={isGraphChatOpen}
+                onOpenChange={setIsGraphChatOpen}
             />
         </div>
     );
