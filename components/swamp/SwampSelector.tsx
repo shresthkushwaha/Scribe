@@ -45,13 +45,14 @@ export default function SwampSelector({ notes, onStart, loading, preSelectedNote
             <h2 className="text-[18px] font-bold text-(--ink)">Target Document</h2>
           </div>
           <select 
-            className="w-full p-4 rounded-[20px] border border-[#eaeaec] bg-white text-[15px] outline-none focus:border-black transition-all"
+            style={{ colorScheme: 'dark' }}
+            className="w-full p-4 rounded-[20px] border border-[var(--border-soft)] bg-[var(--bg-card)] text-[var(--ink)] text-[15px] outline-none focus:border-orange-500 transition-all cursor-pointer"
             value={selectedNote}
             onChange={(e) => setSelectedNote(e.target.value)}
           >
-            <option value="" disabled>Select a note to stress-test...</option>
+            <option value="" disabled className="bg-[#14151a] text-white">Select a note to stress-test...</option>
             {notes.map(n => (
-              <option key={n.id} value={n.id}>{n.name}</option>
+              <option key={n.id} value={n.id} className="bg-[#14151a] text-white">{n.name}</option>
             ))}
           </select>
         </div>
