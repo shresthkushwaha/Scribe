@@ -2,9 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Sparkles } from 'lucide-react';
-
-import { createClient } from '@/lib/supabase/browser';
+import { useRouter } from 'next/navigation';
+import { ArrowRight } from 'lucide-react';
 
 interface LandingNavProps {
     onOpenWaitlist: () => void;
@@ -12,18 +11,17 @@ interface LandingNavProps {
 }
 
 export default function LandingNav({ onOpenWaitlist, onGetStarted }: LandingNavProps) {
-    const handleGoogleSignIn = async () => {
+    const router = useRouter();
+
+    const handleStart = () => {
         try {
             localStorage.setItem('scribe_visited', 'true');
         } catch {}
-        
-        const supabase = createClient();
-        await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback?next=/notes`,
-            },
-        });
+        if (onGetStarted) {
+            onGetStarted();
+        } else {
+            router.push('/notes');
+        }
     };
 
     return (
@@ -58,12 +56,11 @@ export default function LandingNav({ onOpenWaitlist, onGetStarted }: LandingNavP
 
                 {/* CTAs */}
                 <div className="flex items-center gap-4">
-
                     <button
-                        onClick={handleGoogleSignIn}
-                        className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[13px] font-semibold bg-[#ffffff] text-black hover:bg-[#e0e0e0] active:scale-95 transition-all shadow-none"
+                        onClick={handleStart}
+                        className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[13px] font-semibold bg-[#ffffff] text-black hover:bg-[#e0e0e0] active:scale-95 transition-all shadow-none cursor-pointer"
                     >
-                        <span>Open Beta</span>
+                        <span>Try Beta</span>
                         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform text-black" />
                     </button>
                 </div>
