@@ -39,13 +39,17 @@ In high-stakes work, strategy and research get fragmented across long docs, nest
 ## ✨ Interface & Feature Showcase
 
 <div align="center">
-  <h3>🎬 Scribe in Action — Full Showcase Reel</h3>
+  <img src="./assets/scribe-demo.gif" alt="Scribe Interactive Showcase Demo" width="100%" style="border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);" />
+  
+  <br />
 
-  <video src="./assets/scribe-showcase-reel.mp4" controls="controls" width="100%" style="max-height: 640px; border-radius: 12px;">
-    <a href="./assets/scribe-showcase-reel.mp4">Watch Scribe Showcase Reel</a>
-  </video>
+  <p>
+    <a href="./assets/scribe-showcase-compressed.mp4">
+      <img src="https://img.shields.io/badge/▶_Watch_Full_Video-1080p_MP4-EC4E02?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch Full Video" />
+    </a>
+  </p>
 
-  <br /><br />
+  <br />
 
   <img src="./assets/scribe-ui-showcase.png" alt="Scribe Interface Showcase" width="100%" />
   <p><em>From 10,000-foot multi-pillar roadmaps to granular node-level citations and grounded AI dialogue.</em></p>
