@@ -58,6 +58,32 @@ h6 {
   color: var(--text-1);
 }
 
+/* ── Select & Dropdown Contrast Fix ────────────────────────────────────────── */
+select {
+  color-scheme: dark;
+}
+
+select option,
+select optgroup {
+  background-color: #12141a !important;
+  color: #ffffff !important;
+  font-weight: 500;
+  padding: 6px 10px;
+}
+
+[data-theme="light"] select,
+body:not([data-theme="dark"]) select {
+  color-scheme: light;
+}
+
+[data-theme="light"] select option,
+[data-theme="light"] select optgroup,
+body:not([data-theme="dark"]) select option,
+body:not([data-theme="dark"]) select optgroup {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
 /* ── Minimal Scrollbar Utility ──────────────────────────────────────────────── */
 .scrollbar-minimal::-webkit-scrollbar {
   width: 2px;

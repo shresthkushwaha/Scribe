@@ -221,14 +221,19 @@ export default function BYOKModal({ isOpen, onClose }: BYOKModalProps) {
                         <select 
                           value={key.preferredModel}
                           onChange={(e) => updateKeyModel(key.id, e.target.value)}
-                          className="w-full bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-[var(--ink)] focus:outline-none focus:border-indigo-500 cursor-pointer"
+                          style={{ colorScheme: 'dark' }}
+                          className="w-full bg-[var(--bg-muted)] border border-[var(--border-soft)] rounded-lg px-2.5 py-1.5 text-[12px] font-semibold text-[var(--ink)] focus:outline-none focus:border-orange-500 cursor-pointer"
                         >
                           {models.length > 0 ? (
                             models.map(m => (
-                              <option key={m.value} value={m.value}>{m.label}</option>
+                              <option key={m.value} value={m.value} className="bg-[#14151a] text-white">
+                                {m.label}
+                              </option>
                             ))
                           ) : (
-                            <option value={key.preferredModel}>{key.preferredModel}</option>
+                            <option value={key.preferredModel} className="bg-[#14151a] text-white">
+                              {key.preferredModel}
+                            </option>
                           )}
                         </select>
                       </div>
@@ -293,7 +298,8 @@ export default function BYOKModal({ isOpen, onClose }: BYOKModalProps) {
                     <select 
                       value={selectedRegProvider}
                       onChange={(e) => setSelectedRegProvider(e.target.value)}
-                      className="w-full bg-[var(--bg-muted)] border border-[var(--border-soft)] rounded-xl px-3.5 py-2 text-[13px] font-medium text-[var(--ink)] focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer pr-9"
+                      style={{ colorScheme: 'dark' }}
+                      className="w-full bg-[var(--bg-muted)] border border-[var(--border-soft)] rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-[var(--ink)] focus:outline-none focus:border-orange-500 appearance-none cursor-pointer pr-9"
                     >
                       {availableProviders
                         .filter(pId => {
@@ -302,7 +308,9 @@ export default function BYOKModal({ isOpen, onClose }: BYOKModalProps) {
                           return wantLocal ? isLocal : !isLocal;
                         })
                         .map(pId => (
-                          <option key={pId} value={pId}>{getProviderName(pId)}</option>
+                          <option key={pId} value={pId} className="bg-[#14151a] text-white py-1.5 font-medium">
+                            {getProviderName(pId)}
+                          </option>
                         ))}
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--ink-dim)]">
@@ -319,12 +327,17 @@ export default function BYOKModal({ isOpen, onClose }: BYOKModalProps) {
                     <select 
                       value={selectedModelOption}
                       onChange={(e) => setSelectedModelOption(e.target.value)}
-                      className="w-full bg-[var(--bg-muted)] border border-[var(--border-soft)] rounded-xl px-3.5 py-2 text-[13px] font-medium text-[var(--ink)] focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer pr-9"
+                      style={{ colorScheme: 'dark' }}
+                      className="w-full bg-[var(--bg-muted)] border border-[var(--border-soft)] rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-[var(--ink)] focus:outline-none focus:border-orange-500 appearance-none cursor-pointer pr-9"
                     >
                       {modelsForNewKey.map(m => (
-                        <option key={m.value} value={m.value}>{m.label} ({m.value})</option>
+                        <option key={m.value} value={m.value} className="bg-[#14151a] text-white py-1.5 font-medium">
+                          {m.label} ({m.value})
+                        </option>
                       ))}
-                      <option value="custom">Custom / Other Model...</option>
+                      <option value="custom" className="bg-[#14151a] text-white py-1.5 font-medium">
+                        Custom / Other Model...
+                      </option>
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--ink-dim)]">
                       <CaretDown size={14} weight="bold" />
