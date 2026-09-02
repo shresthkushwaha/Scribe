@@ -42,7 +42,7 @@ In high-stakes work, strategy and research get fragmented across long docs, nest
   <h3>🎬 Scribe in Action — Full Showcase Reel</h3>
 
   <video src=".assets/Scribe showcase reel (1) (1).mp4" controls="controls" width="100%" style="max-height: 640px; border-radius: 12px;">
-    <a href="./assets/scribe-showcase-reel.mp4">Watch Scribe Showcase Reel</a>
+    <a href=".assets/Scribe showcase reel (1) (1).mp4">Watch Scribe Showcase Reel</a>
   </video>
 
   <br /><br />
