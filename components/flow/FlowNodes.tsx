@@ -66,6 +66,13 @@ export function StrategistNode({ data, type, selected }: any) {
       <Handle type="target" position={Position.Top} style={{ background: accentColor, opacity: 0 }} />
       <Handle type="source" position={Position.Bottom} style={{ background: accentColor, opacity: 0 }} />
 
+      {isLatest && (
+        <span className="absolute -top-2.5 -right-2 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider rounded-full bg-blue-600 text-white shadow-md border border-white/40 flex items-center gap-1 z-30" style={{ boxShadow: '0 0 10px rgba(10,132,255,0.8)' }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping" />
+          NEW
+        </span>
+      )}
+
       <div className="flex items-center gap-2 mb-1">
           <span style={{ color: accentColor }}>{icon}</span>
           <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: accentColor }}>
@@ -122,6 +129,13 @@ export function PersonaNode({ data, selected }: any) {
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
 
+      {isLatest && (
+        <span className="absolute -top-2.5 -right-2 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider rounded-full bg-blue-600 text-white shadow-md border border-white/40 flex items-center gap-1 z-30" style={{ boxShadow: '0 0 10px rgba(10,132,255,0.8)' }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping" />
+          NEW
+        </span>
+      )}
+
       <div className="flex items-start gap-3">
         <div className="p-2 rounded-lg" style={{ backgroundColor: `${pkgColor}22`, color: pkgColor }}>
           {icon}
@@ -174,6 +188,12 @@ export function EntityNode({ data, selected, type }: any) {
           } as any}>
             <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
             <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+            {isLatest && (
+              <span className="absolute -top-2.5 -right-2 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider rounded-full bg-blue-600 text-white shadow-md border border-white/40 flex items-center gap-1 z-30" style={{ boxShadow: '0 0 10px rgba(10,132,255,0.8)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping" />
+                NEW
+              </span>
+            )}
             {data.label}
         </div>
     );

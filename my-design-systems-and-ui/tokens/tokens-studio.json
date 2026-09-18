@@ -1,0 +1,271 @@
+{
+  "global": {
+    "color": {
+      "canvas": {
+        "base": {
+          "value": "#07080a",
+          "type": "color",
+          "description": "Deepest canvas background"
+        },
+        "subtle": {
+          "value": "#0a0b0d",
+          "type": "color",
+          "description": "Tactical app background"
+        },
+        "surface": {
+          "value": "#0d0d0d",
+          "type": "color",
+          "description": "Elevated component surface"
+        },
+        "card": {
+          "value": "#141414",
+          "type": "color",
+          "description": "Standard card background"
+        },
+        "cardHover": {
+          "value": "#1a1a1a",
+          "type": "color",
+          "description": "Interactive card hover state"
+        },
+        "dock": {
+          "value": "rgba(26, 26, 26, 0.85)",
+          "type": "color",
+          "description": "System dock glass background"
+        },
+        "glass": {
+          "value": "rgba(18, 20, 23, 0.72)",
+          "type": "color",
+          "description": "Tactical HUD backdrop"
+        }
+      },
+      "text": {
+        "primary": {
+          "value": "#f2f2f7",
+          "type": "color",
+          "description": "Primary high-contrast text"
+        },
+        "secondary": {
+          "value": "#a1a1aa",
+          "type": "color",
+          "description": "Secondary descriptive text"
+        },
+        "muted": {
+          "value": "#71717a",
+          "type": "color",
+          "description": "Muted metadata and label text"
+        },
+        "faint": {
+          "value": "rgba(234, 234, 234, 0.20)",
+          "type": "color",
+          "description": "Subtle placeholder text"
+        },
+        "onAccent": {
+          "value": "#000000",
+          "type": "color",
+          "description": "Text rendered over bright accents"
+        }
+      },
+      "hairline": {
+        "default": {
+          "value": "rgba(255, 255, 255, 0.08)",
+          "type": "color",
+          "description": "Default 1px hairline border"
+        },
+        "subtle": {
+          "value": "rgba(255, 255, 255, 0.04)",
+          "type": "color",
+          "description": "Faint divider border"
+        },
+        "strong": {
+          "value": "rgba(255, 255, 255, 0.16)",
+          "type": "color",
+          "description": "Emphasized interactive border"
+        },
+        "focus": {
+          "value": "#ff4d00",
+          "type": "color",
+          "description": "Focus ring indicator"
+        }
+      },
+      "signals": {
+        "orange": {
+          "value": "#ff4d00",
+          "type": "color",
+          "description": "Signature Scribe flame / Tactical action"
+        },
+        "orangeGlow": {
+          "value": "rgba(255, 77, 0, 0.25)",
+          "type": "color",
+          "description": "Flame ambient glow"
+        },
+        "red": {
+          "value": "#ff453a",
+          "type": "color",
+          "description": "Swarm Red Team / Critical risk"
+        },
+        "mint": {
+          "value": "#32d74b",
+          "type": "color",
+          "description": "Bauhaus / Success / Active verified flow"
+        },
+        "blue": {
+          "value": "#0a84ff",
+          "type": "color",
+          "description": "Market Movers / External sync connector"
+        },
+        "violet": {
+          "value": "#bf5af2",
+          "type": "color",
+          "description": "Deep Thinkers / Neural lens indicator"
+        },
+        "amber": {
+          "value": "#fbbf24",
+          "type": "color",
+          "description": "Oracle insight / Cautionary signal"
+        },
+        "rose": {
+          "value": "#ffccd9",
+          "type": "color",
+          "description": "Delicate entity accent"
+        }
+      }
+    },
+    "fontFamilies": {
+      "sans": { "value": "DM Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif", "type": "fontFamilies" },
+      "serif": { "value": "Playfair Display, Georgia, serif", "type": "fontFamilies" },
+      "mono": { "value": "JetBrains Mono, Fira Code, ui-monospace, monospace", "type": "fontFamilies" }
+    },
+    "fontSizes": {
+      "display": { "value": "32", "type": "fontSizes" },
+      "heading": { "value": "20", "type": "fontSizes" },
+      "subhead": { "value": "15", "type": "fontSizes" },
+      "body": { "value": "14", "type": "fontSizes" },
+      "caption": { "value": "12", "type": "fontSizes" },
+      "badge": { "value": "9", "type": "fontSizes" }
+    },
+    "fontWeights": {
+      "display": { "value": "900", "type": "fontWeights" },
+      "heading": { "value": "700", "type": "fontWeights" },
+      "subhead": { "value": "600", "type": "fontWeights" },
+      "body": { "value": "400", "type": "fontWeights" },
+      "caption": { "value": "500", "type": "fontWeights" },
+      "badge": { "value": "900", "type": "fontWeights" }
+    },
+    "lineHeights": {
+      "display": { "value": "1.15", "type": "lineHeights" },
+      "heading": { "value": "1.3", "type": "lineHeights" },
+      "subhead": { "value": "1.4", "type": "lineHeights" },
+      "body": { "value": "1.5", "type": "lineHeights" },
+      "caption": { "value": "1.4", "type": "lineHeights" },
+      "badge": { "value": "1", "type": "lineHeights" }
+    },
+    "letterSpacing": {
+      "display": { "value": "-3%", "type": "letterSpacing" },
+      "heading": { "value": "-2%", "type": "letterSpacing" },
+      "subhead": { "value": "-1%", "type": "letterSpacing" },
+      "body": { "value": "0", "type": "letterSpacing" },
+      "caption": { "value": "2%", "type": "letterSpacing" },
+      "badge": { "value": "20%", "type": "letterSpacing" }
+    },
+    "borderRadius": {
+      "none": { "value": "0", "type": "borderRadius" },
+      "xs": { "value": "4", "type": "borderRadius" },
+      "sm": { "value": "8", "type": "borderRadius" },
+      "md": { "value": "14", "type": "borderRadius" },
+      "lg": { "value": "20", "type": "borderRadius" },
+      "xl": { "value": "28", "type": "borderRadius" },
+      "pill": { "value": "9999", "type": "borderRadius" }
+    },
+    "spacing": {
+      "0": { "value": "0", "type": "spacing" },
+      "1": { "value": "4", "type": "spacing" },
+      "2": { "value": "8", "type": "spacing" },
+      "3": { "value": "12", "type": "spacing" },
+      "4": { "value": "16", "type": "spacing" },
+      "5": { "value": "20", "type": "spacing" },
+      "6": { "value": "24", "type": "spacing" },
+      "8": { "value": "32", "type": "spacing" },
+      "10": { "value": "40", "type": "spacing" },
+      "12": { "value": "48", "type": "spacing" },
+      "16": { "value": "64", "type": "spacing" }
+    },
+    "sizing": {
+      "iconSm": { "value": "16", "type": "sizing" },
+      "iconMd": { "value": "24", "type": "sizing" },
+      "iconLg": { "value": "32", "type": "sizing" },
+      "avatarSm": { "value": "24", "type": "sizing" },
+      "avatarMd": { "value": "32", "type": "sizing" },
+      "avatarLg": { "value": "48", "type": "sizing" }
+    },
+    "boxShadow": {
+      "tacticalSm": {
+        "value": {
+          "x": "0",
+          "y": "2",
+          "blur": "8",
+          "spread": "0",
+          "color": "rgba(0, 0, 0, 0.4)",
+          "type": "dropShadow"
+        },
+        "type": "boxShadow"
+      },
+      "tacticalMd": {
+        "value": {
+          "x": "0",
+          "y": "12",
+          "blur": "24",
+          "spread": "-10",
+          "color": "rgba(0, 0, 0, 0.6)",
+          "type": "dropShadow"
+        },
+        "type": "boxShadow"
+      },
+      "tacticalLg": {
+        "value": {
+          "x": "0",
+          "y": "24",
+          "blur": "48",
+          "spread": "-12",
+          "color": "rgba(0, 0, 0, 0.8)",
+          "type": "dropShadow"
+        },
+        "type": "boxShadow"
+      },
+      "glowOrange": {
+        "value": {
+          "x": "0",
+          "y": "0",
+          "blur": "20",
+          "spread": "0",
+          "color": "rgba(255, 77, 0, 0.35)",
+          "type": "dropShadow"
+        },
+        "type": "boxShadow"
+      },
+      "glowMint": {
+        "value": {
+          "x": "0",
+          "y": "0",
+          "blur": "20",
+          "spread": "0",
+          "color": "rgba(50, 215, 75, 0.35)",
+          "type": "dropShadow"
+        },
+        "type": "boxShadow"
+      }
+    },
+    "opacity": {
+      "transparent": { "value": "0", "type": "opacity" },
+      "faint": { "value": "0.1", "type": "opacity" },
+      "subtle": { "value": "0.4", "type": "opacity" },
+      "medium": { "value": "0.7", "type": "opacity" },
+      "solid": { "value": "1", "type": "opacity" }
+    }
+  },
+  "$themes": [],
+  "$metadata": {
+    "tokenSetOrder": [
+      "global"
+    ]
+  }
+}

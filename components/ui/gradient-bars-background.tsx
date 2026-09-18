@@ -15,7 +15,7 @@ const GradientBars: React.FC<GradientBarsProps> = ({
   animationDuration = 2,
   className = "",
 }) => {
-  const calculateHeight = (index: number, total: number) => {
+  const calculateScale = (index: number, total: number) => {
     const position = index / (total - 1);
     const maxHeight = 100;
     const minHeight = 30;
@@ -24,7 +24,8 @@ const GradientBars: React.FC<GradientBarsProps> = ({
     const distanceFromCenter = Math.abs(position - center);
     const heightPercentage = Math.pow(distanceFromCenter * 2, 1.2);
 
-    return minHeight + (maxHeight - minHeight) * heightPercentage;
+    const height = minHeight + (maxHeight - minHeight) * heightPercentage;
+    return (height / 100).toFixed(4);
   };
 
   return (
@@ -47,7 +48,7 @@ const GradientBars: React.FC<GradientBarsProps> = ({
           }}
         >
           {Array.from({ length: numBars }).map((_, index) => {
-            const height = calculateHeight(index, numBars);
+            const scale = calculateScale(index, numBars);
             return (
               <div
                 key={index}
@@ -56,7 +57,7 @@ const GradientBars: React.FC<GradientBarsProps> = ({
                   maxWidth: `calc(100% / ${numBars})`,
                   height: "100%",
                   background: `linear-gradient(to top, ${gradientFrom}, ${gradientTo})`,
-                  transform: `scaleY(${height / 100})`,
+                  transform: `scaleY(${scale})`,
                   transformOrigin: "bottom",
                   transition: "transform 0.5s ease-in-out",
                   animation: `pulseBar ${animationDuration}s ease-in-out infinite alternate`,
@@ -64,7 +65,7 @@ const GradientBars: React.FC<GradientBarsProps> = ({
                   outline: "1px solid rgba(0, 0, 0, 0)",
                   boxSizing: "border-box",
                   // @ts-ignore
-                  "--initial-scale": height / 100,
+                  "--initial-scale": scale,
                 }}
               />
             );

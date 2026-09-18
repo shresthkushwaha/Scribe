@@ -236,23 +236,110 @@ export async function executeStrategistQuery(userQuery: string, skillHint: strin
     }>;
     chatSummary: string;
 } | null> {
+    const getHeuristicProtocolResult = (action: string, targetQuery: string) => {
+      const cleanAction = action.toLowerCase();
+      const targetSummary = targetQuery.slice(0, 60);
+
+      type NodeCategory = 'CRITIQUE' | 'INSIGHT' | 'FACT' | 'OPPORTUNITY' | 'RISK' | 'PATH' | 'QUESTION' | 'DATA';
+
+      switch (cleanAction) {
+        case 'red-team':
+          return {
+            sessionTitle: 'RED TEAM: Adversarial Stress-Test',
+            sessionCategory: 'adversarial',
+            nodes: [
+              { label: 'Assumption Collapse', category: 'CRITIQUE' as NodeCategory, summary: `Critical reliance on unchallenged premises in "${targetSummary}" may fail under edge conditions.`, intensity: 0.95 },
+              { label: 'Vulnerability Vector', category: 'RISK' as NodeCategory, summary: 'Identified attack surface in operational or architectural workflow.', intensity: 0.9 },
+              { label: 'Counter-Measure Stress', category: 'RISK' as NodeCategory, summary: 'Current mitigation lacks redundancy if the primary vector fails.', intensity: 0.85 },
+              { label: 'Adversarial Dilemma', category: 'QUESTION' as NodeCategory, summary: 'How does the system withstand intentional misdirection or hostile inputs?', intensity: 0.8 },
+              { label: 'Boundary Breach', category: 'CRITIQUE' as NodeCategory, summary: 'Operational limits tested beyond safety envelope.', intensity: 0.9 }
+            ],
+            chatSummary: `Synthesized 5 adversarial stress-test vectors challenging "${targetSummary}".`
+          };
+        case 'gaps-audit':
+          return {
+            sessionTitle: 'GAPS AUDIT: Blind Spot Analysis',
+            sessionCategory: 'risk',
+            nodes: [
+              { label: 'Unstated Dependency', category: 'QUESTION' as NodeCategory, summary: `Implicit structural dependency around "${targetSummary}" not formally verified.`, intensity: 0.85 },
+              { label: 'Operational Blind Spot', category: 'RISK' as NodeCategory, summary: 'Missing feedback loop between input processing and downstream state.', intensity: 0.9 },
+              { label: 'Data Provenance Gap', category: 'QUESTION' as NodeCategory, summary: 'Traceability between source premises and derived conclusions requires verification.', intensity: 0.75 },
+              { label: 'Latent Edge Condition', category: 'INSIGHT' as NodeCategory, summary: 'Identified unhandled corner case in domain logic mapping.', intensity: 0.8 }
+            ],
+            chatSummary: `Synthesized 4 precision gap audits for "${targetSummary}".`
+          };
+        case 'golden-path':
+          return {
+            sessionTitle: 'GOLDEN PATH: Strategic Execution Roadmap',
+            sessionCategory: 'path',
+            nodes: [
+              { label: 'Step 1: Axiom Validation', category: 'PATH' as NodeCategory, summary: `Isolate and confirm foundational premises for "${targetSummary}".`, intensity: 0.9 },
+              { label: 'Step 2: Rapid Prototyping', category: 'PATH' as NodeCategory, summary: 'Deploy minimum viable test to validate core hypothesis in isolation.', intensity: 0.85 },
+              { label: 'Step 3: Friction Elimination', category: 'PATH' as NodeCategory, summary: 'Streamline data throughput and remove redundant intermediaries.', intensity: 0.8 },
+              { label: 'Step 4: Scale & Hardening', category: 'PATH' as NodeCategory, summary: 'Establish automated invariant checks and fail-safe boundaries.', intensity: 0.9 },
+              { label: 'Step 5: Systematic Review', category: 'PATH' as NodeCategory, summary: 'Continuously audit performance metrics against strategic benchmarks.', intensity: 0.85 }
+            ],
+            chatSummary: `Generated 5-step Golden Path roadmap for "${targetSummary}".`
+          };
+        case 'blue-ocean':
+          return {
+            sessionTitle: 'BLUE OCEAN: Uncontested Strategy',
+            sessionCategory: 'synthesis',
+            nodes: [
+              { label: 'Value Innovation Vector', category: 'OPPORTUNITY' as NodeCategory, summary: `Simultaneously drive down friction while unlocking non-traditional capabilities.`, intensity: 0.9 },
+              { label: 'Untapped Dimension', category: 'OPPORTUNITY' as NodeCategory, summary: 'Address underserved user workflows bypassed by conventional tools.', intensity: 0.85 },
+              { label: 'Asymmetric Advantage', category: 'INSIGHT' as NodeCategory, summary: 'Leverage proprietary zero-overhead spatial architecture as a structural moat.', intensity: 0.95 },
+              { label: 'Complementary Ecosystem', category: 'OPPORTUNITY' as NodeCategory, summary: 'Interface seamlessly with external knowledge graphs and local files.', intensity: 0.8 }
+            ],
+            chatSummary: `Identified 4 Blue Ocean strategic opportunity vectors.`
+          };
+        case 'first-principles':
+          return {
+            sessionTitle: 'FIRST PRINCIPLES: Bedrock Axioms',
+            sessionCategory: 'synthesis',
+            nodes: [
+              { label: 'Bedrock Truth', category: 'FACT' as NodeCategory, summary: `Irreducible axiomatic reality governing the system constraints for "${targetSummary}".`, intensity: 0.95 },
+              { label: 'Causal Mechanism', category: 'INSIGHT' as NodeCategory, summary: 'Direct deterministic link between input state and resulting action.', intensity: 0.9 },
+              { label: 'Reconstructed Principle', category: 'PATH' as NodeCategory, summary: 'Synthesized design rule constructed directly from foundational axioms.', intensity: 0.85 },
+              { label: 'Invariant Anchor', category: 'FACT' as NodeCategory, summary: 'Non-negotiable structural constraint preserved under all transformations.', intensity: 0.9 }
+            ],
+            chatSummary: `Synthesized foundational first-principles axioms.`
+          };
+        case 'scamper':
+          return {
+            sessionTitle: 'SCAMPER: Innovation Mutation',
+            sessionCategory: 'exploratory',
+            nodes: [
+              { label: 'Substitute', category: 'OPPORTUNITY' as NodeCategory, summary: 'Replace rigid hierarchies with adaptive spatial topological clustering.', intensity: 0.85 },
+              { label: 'Combine', category: 'OPPORTUNITY' as NodeCategory, summary: 'Fuse real-time note editing with algorithmic spatial knowledge synthesis.', intensity: 0.9 },
+              { label: 'Adapt', category: 'INSIGHT' as NodeCategory, summary: 'Incorporate biological mycelial branching patterns into note graphs.', intensity: 0.8 },
+              { label: 'Modify', category: 'OPPORTUNITY' as NodeCategory, summary: 'Magnify subtle latent connections through high-contrast thematic layers.', intensity: 0.85 },
+              { label: 'Put to Other Uses', category: 'OPPORTUNITY' as NodeCategory, summary: 'Repurpose spatial graph as an interactive executive briefing canvas.', intensity: 0.8 },
+              { label: 'Eliminate', category: 'INSIGHT' as NodeCategory, summary: 'Strip away modal distractions to maximize uninterrupted flow state.', intensity: 0.9 },
+              { label: 'Reverse', category: 'PATH' as NodeCategory, summary: 'Invert top-down categorization into emergent bottom-up cluster synthesis.', intensity: 0.85 }
+            ],
+            chatSummary: `Generated 7 SCAMPER mutation vectors.`
+          };
+        default:
+          return {
+            sessionTitle: `${action.replace('-', ' ').toUpperCase()}: Strategic Analysis`,
+            sessionCategory: 'exploratory',
+            nodes: [
+              { label: 'Core Mechanism', category: 'INSIGHT' as NodeCategory, summary: `Systemic leverage derived from ${targetSummary}.`, intensity: 0.85 },
+              { label: 'Strategic Risk', category: 'RISK' as NodeCategory, summary: 'Execution barrier to monitor during rollout.', intensity: 0.9 },
+              { label: 'High-Impact Opportunity', category: 'OPPORTUNITY' as NodeCategory, summary: 'Adjacent high-impact expansion vector.', intensity: 0.8 },
+              { label: 'Actionable Path', category: 'PATH' as NodeCategory, summary: 'Immediate next step to validate assumptions.', intensity: 0.85 }
+            ],
+            chatSummary: `Synthesized strategic vectors for ${action}.`
+          };
+      }
+    };
+
     const byok = getActiveBYOKConfig();
     const apiKey = (byok?.value && byok.value !== 'local-no-key') ? byok.value : getEffectiveGeminiKey();
     
     if (!apiKey) {
-      // Return heuristic response when no API key is provided
-      const skillName = skillHint.replace('-', ' ').toUpperCase();
-      return {
-        sessionTitle: `${skillName}: Strategy Vector`,
-        sessionCategory: 'exploratory',
-        nodes: [
-          { label: 'Core Mechanism', category: 'INSIGHT', summary: `Systemic leverage derived from ${userQuery.slice(0, 40)}.`, intensity: 0.8 },
-          { label: 'Strategic Risk', category: 'RISK', summary: 'Execution barrier to watch during rollout.', intensity: 0.9 },
-          { label: 'Unexplored Opportunity', category: 'OPPORTUNITY', summary: 'Adjacent high-impact expansion avenue.', intensity: 0.75 },
-          { label: 'Immediate Action Path', category: 'PATH', summary: 'Concrete next step to validate assumptions.', intensity: 0.85 }
-        ],
-        chatSummary: `Synthesized 4 strategic vectors for ${skillHint} based on your workspace context.`
-      };
+      return getHeuristicProtocolResult(skillHint, userQuery);
     }
 
     const baseURL = byok?.baseURL || 'https://generativelanguage.googleapis.com';
@@ -291,11 +378,14 @@ OUTPUT SCHEMA (strict JSON):
                 generationConfig: { responseMimeType: 'application/json', temperature: 0.75 }
             })
         });
-        if (!response.ok) return null;
+        if (!response.ok) return getHeuristicProtocolResult(skillHint, userQuery);
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        return text ? safeJsonParse(text) : null;
-    } catch (e) { return null; }
+        const parsed = text ? safeJsonParse(text) : null;
+        return parsed || getHeuristicProtocolResult(skillHint, userQuery);
+    } catch (e) { 
+        return getHeuristicProtocolResult(skillHint, userQuery); 
+    }
 }
 
 // ── Strategist: Route user message to a skill ─────────────────────────────

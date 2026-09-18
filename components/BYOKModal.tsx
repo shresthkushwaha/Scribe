@@ -40,6 +40,8 @@ export default function BYOKModal({ isOpen, onClose }: BYOKModalProps) {
   const [customModelInput, setCustomModelInput] = useState('');
   const [customBaseURL, setCustomBaseURL] = useState('');
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     load();
@@ -81,9 +83,57 @@ export default function BYOKModal({ isOpen, onClose }: BYOKModalProps) {
     } else {
       setKeyValue('');
     }
+    setTestResult(null);
   }, [selectedRegProvider]);
 
   if (!isOpen) return null;
+
+  const handleTestKey = async () => {
+    const p = selectedRegProvider;
+    const isLocal = p === 'ollama' || p === 'lmstudio';
+    const v = keyValue.trim();
+    if (!v && !isLocal) {
+      setTestResult({ success: false, message: 'Please enter an API key to test.' });
+      return;
+    }
+
+    setIsTesting(true);
+    setTestResult(null);
+
+    try {
+      if (p === 'google') {
+        const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash?key=${v}`;
+        const res = await fetch(testUrl);
+        if (res.ok) {
+          setTestResult({ success: true, message: 'Verified! Gemini 2.5 Flash API connection is successful.' });
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          const errMsg = errData.error?.message || `HTTP ${res.status}`;
+          if (res.status === 400 || res.status === 403) {
+            setTestResult({ success: false, message: `Invalid Key (${errMsg}). Check your key in Google AI Studio.` });
+          } else if (res.status === 429) {
+            setTestResult({ success: false, message: `Rate Limited / Quota Exceeded (HTTP 429). Try another key or tier.` });
+          } else {
+            setTestResult({ success: false, message: `API Error: ${errMsg}` });
+          }
+        }
+      } else if (isLocal) {
+        const url = v || (p === 'ollama' ? 'http://localhost:11434/v1' : 'http://localhost:1234/v1');
+        const res = await fetch(`${url}/models`).catch(() => null);
+        if (res && res.ok) {
+          setTestResult({ success: true, message: `Local endpoint reachable at ${url}` });
+        } else {
+          setTestResult({ success: false, message: `Could not reach ${p} at ${url}. Ensure the server is running with OLLAMA_ORIGINS="*".` });
+        }
+      } else {
+        setTestResult({ success: true, message: `Ready to save ${getProviderName(p)} credential.` });
+      }
+    } catch (err: any) {
+      setTestResult({ success: false, message: `Connection error: ${err.message || 'Network unreachable'}` });
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   const handleAddKey = () => {
     const p = selectedRegProvider;
@@ -110,6 +160,7 @@ export default function BYOKModal({ isOpen, onClose }: BYOKModalProps) {
     addKey(newKey);
     setKeyValue('');
     setCustomBaseURL('');
+    setTestResult(null);
     setFeedbackMsg(`✓ Added ${getProviderName(p)} as active credential`);
     setTimeout(() => setFeedbackMsg(null), 3000);
   };
@@ -144,6 +195,17 @@ export default function BYOKModal({ isOpen, onClose }: BYOKModalProps) {
         {/* Scrollable Body */}
         <div className="p-6 md:p-8 overflow-y-auto space-y-8 no-scrollbar flex-1">
           
+          {/* Statutory Data Sovereignty Notice (EU AI Act Art. 2) */}
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3.5">
+            <ShieldCheck size={22} weight="fill" className="text-amber-500 shrink-0 mt-0.5" />
+            <div className="text-[12px] leading-relaxed">
+              <span className="font-bold text-[var(--ink)]">Client-Side Zero-Custody Guarantee: </span>
+              <span className="text-[var(--ink-secondary)]">
+                Your API credentials are stored exclusively in client-side localStorage. All inference requests are dispatched directly from your browser to model endpoints with zero intermediary custody.
+              </span>
+            </div>
+          </div>
+
           {/* Section 1: Active Credentials */}
           <section className="space-y-4">
             <div className="flex items-center justify-between">
@@ -398,19 +460,44 @@ export default function BYOKModal({ isOpen, onClose }: BYOKModalProps) {
                 </div>
               )}
 
+              {/* Test Result Message */}
+              {testResult && (
+                <div className={`p-3 rounded-xl text-[12px] font-medium flex items-start gap-2 animate-in fade-in ${
+                  testResult.success 
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25' 
+                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/25'
+                }`}>
+                  <span className="font-bold shrink-0">{testResult.success ? '✓' : '⚠'}</span>
+                  <span>{testResult.message}</span>
+                </div>
+              )}
+
               {feedbackMsg && (
                 <p className="text-[12px] font-semibold text-emerald-500 animate-in fade-in">
                   {feedbackMsg}
                 </p>
               )}
 
-              <button 
-                onClick={handleAddKey}
-                className="w-full py-3 bg-[var(--ink)] text-[var(--bg-card)] rounded-xl text-[13px] font-bold shadow-sm hover:opacity-90 transition-all flex items-center justify-center gap-2"
-              >
-                <Plus size={16} weight="bold" />
-                Add {selectedRegProvider === 'ollama' || selectedRegProvider === 'lmstudio' ? 'Local AI Model' : 'Credential'}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                <button 
+                  type="button"
+                  onClick={handleTestKey}
+                  disabled={isTesting}
+                  className="sm:w-1/3 py-3 bg-[var(--bg-muted)] border border-[var(--border-soft)] hover:border-amber-500/50 text-[var(--ink)] rounded-xl text-[12px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Sparkle size={15} weight="fill" className={isTesting ? 'animate-spin text-amber-500' : 'text-amber-500'} />
+                  <span>{isTesting ? 'Testing...' : 'Test Key'}</span>
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={handleAddKey}
+                  className="sm:w-2/3 py-3 bg-[var(--ink)] text-[var(--bg-card)] rounded-xl text-[13px] font-bold shadow-sm hover:opacity-90 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Plus size={16} weight="bold" />
+                  <span>Save {selectedRegProvider === 'ollama' || selectedRegProvider === 'lmstudio' ? 'Local AI' : 'Credential'}</span>
+                </button>
+              </div>
             </div>
           </section>
           

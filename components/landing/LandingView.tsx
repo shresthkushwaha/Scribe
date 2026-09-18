@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import LandingNav from '@/components/landing/LandingNav';
 import LandingHero from '@/components/landing/LandingHero';
+import DemoVideoBento from '@/components/landing/DemoVideoBento';
 import FeatureBento from '@/components/landing/FeatureBento';
 import LandingCTA from '@/components/landing/LandingCTA';
 import LandingPricing from '@/components/landing/LandingPricing';
@@ -33,6 +34,9 @@ export default function LandingView({ onGetStarted }: LandingViewProps) {
             <main className="flex flex-col items-center w-full">
                 {/* Hero Section with Dynamic Dithering Canvas */}
                 <LandingHero onOpenWaitlist={() => setIsWaitlistOpen(true)} onGetStarted={onGetStarted} />
+
+                {/* Video Demonstration Bento Grid (6-Step Interactive Guide) */}
+                <DemoVideoBento />
 
                 {/* Bento Grid Feature Showcases */}
                 <FeatureBento />
