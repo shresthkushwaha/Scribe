@@ -186,7 +186,7 @@ function GraphContent() {
 
                         {activeTab === 'saved' && maps.length > 0 && (
                             <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0 shrink-0">
-                                {['all', 'individual', 'multi', 'oracle', 'strategist', 'swamp'].map(type => (
+                                {['all', 'individual', 'multi', 'oracle'].map(type => (
                                     <button
                                         key={type}
                                         onClick={() => setTypeFilter(type)}

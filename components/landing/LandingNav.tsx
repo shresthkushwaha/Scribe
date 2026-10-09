@@ -40,6 +40,10 @@ export default function LandingNav({ onOpenWaitlist, onGetStarted }: LandingNavP
 
                 {/* Nav Links */}
                 <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-6 text-[13px] font-medium text-[#8c8c8c]">
+                    <a href="#demo-guide" className="hover:text-orange-400 text-[#cdcdcd] transition-colors flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                        Guide
+                    </a>
                     <a href="#features" className="hover:text-[#cdcdcd] transition-colors">
                         Features
                     </a>

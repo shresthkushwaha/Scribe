@@ -1,0 +1,134 @@
+{
+  "global": {
+    "color": {
+      "canvas": {
+        "base": {
+          "value": "#07080a",
+          "type": "color",
+          "description": "Deepest canvas background"
+        },
+        "subtle": {
+          "value": "#0a0b0d",
+          "type": "color",
+          "description": "Tactical app background"
+        },
+        "surface": {
+          "value": "#0d0d0d",
+          "type": "color",
+          "description": "Elevated component surface"
+        },
+        "card": {
+          "value": "#141414",
+          "type": "color",
+          "description": "Standard card background"
+        },
+        "cardHover": {
+          "value": "#1a1a1a",
+          "type": "color",
+          "description": "Interactive card hover state"
+        },
+        "dock": {
+          "value": "rgba(26, 26, 26, 0.85)",
+          "type": "color",
+          "description": "System dock glass background"
+        },
+        "glass": {
+          "value": "rgba(18, 20, 23, 0.72)",
+          "type": "color",
+          "description": "Tactical HUD backdrop"
+        }
+      },
+      "text": {
+        "primary": {
+          "value": "#f2f2f7",
+          "type": "color",
+          "description": "Primary high-contrast text"
+        },
+        "secondary": {
+          "value": "#a1a1aa",
+          "type": "color",
+          "description": "Secondary descriptive text"
+        },
+        "muted": {
+          "value": "#71717a",
+          "type": "color",
+          "description": "Muted metadata and label text"
+        },
+        "faint": {
+          "value": "rgba(234, 234, 234, 0.20)",
+          "type": "color",
+          "description": "Subtle placeholder text"
+        },
+        "onAccent": {
+          "value": "#000000",
+          "type": "color",
+          "description": "Text rendered over bright accents"
+        }
+      },
+      "hairline": {
+        "default": {
+          "value": "rgba(255, 255, 255, 0.08)",
+          "type": "color",
+          "description": "Default 1px hairline border"
+        },
+        "subtle": {
+          "value": "rgba(255, 255, 255, 0.04)",
+          "type": "color",
+          "description": "Faint divider border"
+        },
+        "strong": {
+          "value": "rgba(255, 255, 255, 0.16)",
+          "type": "color",
+          "description": "Emphasized interactive border"
+        },
+        "focus": {
+          "value": "#ff4d00",
+          "type": "color",
+          "description": "Focus ring indicator"
+        }
+      },
+      "signals": {
+        "orange": {
+          "value": "#ff4d00",
+          "type": "color",
+          "description": "Signature Scribe flame / Tactical action"
+        },
+        "orangeGlow": {
+          "value": "rgba(255, 77, 0, 0.25)",
+          "type": "color",
+          "description": "Flame ambient glow"
+        },
+        "red": {
+          "value": "#ff453a",
+          "type": "color",
+          "description": "Swarm Red Team / Critical risk"
+        },
+        "mint": {
+          "value": "#32d74b",
+          "type": "color",
+          "description": "Bauhaus / Success / Active verified flow"
+        },
+        "blue": {
+          "value": "#0a84ff",
+          "type": "color",
+          "description": "Market Movers / External sync connector"
+        },
+        "violet": {
+          "value": "#bf5af2",
+          "type": "color",
+          "description": "Deep Thinkers / Neural lens indicator"
+        },
+        "amber": {
+          "value": "#fbbf24",
+          "type": "color",
+          "description": "Oracle insight / Cautionary signal"
+        },
+        "rose": {
+          "value": "#ffccd9",
+          "type": "color",
+          "description": "Delicate entity accent"
+        }
+      }
+    }
+  }
+}

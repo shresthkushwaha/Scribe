@@ -13,15 +13,15 @@ export default function CartridgeDock() {
   const cartridges = [
     { id: 'dataset-local', name: 'Local Store', type: 'dataset' as const, icon: <Database size={16} /> },
     { id: 'dataset-external', name: 'External Injector', type: 'dataset' as const, icon: <Database size={16} /> },
-    ...Object.values(LENS_DICTIONARY).map(lens => ({
+    ...Object.values(LENS_DICTIONARY)
+      .filter(lens => lens.id !== 'swamp' && lens.id !== 'strategist')
+      .map(lens => ({
       id: `lens-${lens.id}`,
       name: lens.name,
       type: 'lens' as const,
       configId: lens.id,
       icon: 
         lens.id === 'oracle' ? <Lightning size={16} /> :
-        lens.id === 'swamp' ? <Ghost size={16} /> :
-        lens.id === 'strategist' ? <Robot size={16} /> :
         <Scan size={16} />
     }))
   ];

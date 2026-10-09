@@ -218,14 +218,30 @@ body:not([data-theme="dark"]) select optgroup {
   outline: none;
 }
 
-/* ── AI Mutation Glow ──────────────────────────────────────────────────────── */
+/* ── AI Mutation Glow & Latest Node Highlighting ────────────────────────── */
 @keyframes pulse-glow {
-  0% { box-shadow: 0 0 5px var(--glow-color, #ff4d00), 0 0 10px var(--glow-color, #ff4d00); opacity: 1; }
-  50% { box-shadow: 0 0 20px var(--glow-color, #ff4d00), 0 0 35px var(--glow-color, #ff4d00); opacity: 0.9; }
-  100% { box-shadow: 0 0 5px var(--glow-color, #ff4d00), 0 0 10px var(--glow-color, #ff4d00); opacity: 1; }
+  0% { box-shadow: 0 0 0 0 rgba(10, 132, 255, 0.7), 0 0 12px var(--glow-color, #0a84ff); }
+  50% { box-shadow: 0 0 0 8px rgba(10, 132, 255, 0), 0 0 24px var(--glow-color, #0a84ff); }
+  100% { box-shadow: 0 0 0 0 rgba(10, 132, 255, 0), 0 0 12px var(--glow-color, #0a84ff); }
+}
+
+@keyframes latest-border-pulse {
+  0%, 100% { stroke: #0a84ff; stroke-width: 2.5px; filter: drop-shadow(0 0 6px rgba(10, 132, 255, 0.7)); }
+  50% { stroke: #30d158; stroke-width: 3px; filter: drop-shadow(0 0 12px rgba(48, 209, 88, 0.9)); }
+}
+
+@keyframes beacon-ping {
+  0% { transform: scale(0.9); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 0.4; }
+  100% { transform: scale(0.9); opacity: 0.9; }
 }
 
 .glow-new-node {
   animation: pulse-glow 2s infinite ease-in-out;
   z-index: 100 !important;
+  position: relative;
 }
+
+.latest-node-card {
+  animation: latest-border-pulse 2.5s infinite ease-in-out;
+}

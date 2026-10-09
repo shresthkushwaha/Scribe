@@ -49,68 +49,95 @@ export async function askGraphChatbot(
 ): Promise<string> {
   const byok = getActiveBYOKConfig();
   const apiKey = (byok?.value && byok.value !== 'local-no-key') ? byok.value : getEffectiveGeminiKey();
-  const model = byok?.preferredModel || 'gemini-2.5-flash';
   const userQuery = messages[messages.length - 1]?.content || '';
 
-  const systemPrompt = `You are the Scribe Knowledge Graph Intelligence Assistant.
+  const systemPrompt = `You are the Scribe Knowledge Graph Intelligence Assistant — an expert analytical strategist and knowledge graph co-pilot.
 You are embedded directly inside an interactive knowledge graph workspace.
 
 CURRENT GRAPH CONTEXT:
 - Document / Topic Title: "${graphContext.title || 'Untitled Knowledge Base'}"
 ${graphContext.activeNodeLabel ? `- Focused / Selected Node: "${graphContext.activeNodeLabel}"` : ''}
-- Existing Key Concepts / Nodes in Graph: ${graphContext.nodeLabels.slice(0, 30).join(', ') || 'None yet'}
+- Existing Key Concepts / Nodes in Graph: ${graphContext.nodeLabels.slice(0, 40).join(', ') || 'None yet'}
 - Background Content Excerpt:
-${(graphContext.content || '').slice(0, 4000)}
+${(graphContext.content || '').slice(0, 6000)}
 
 GOAL:
-Provide clear, structured, and insightful answers to the user's questions or requests.
-Break down complex ideas into actionable concepts, risks, pathways, or implications that could naturally form new nodes in their knowledge graph. Keep the tone sharp, analytical, and constructive.`;
+Provide clear, structured, deeply grounded, and insightful answers to the user's questions or requests.
+Directly reference the specific concepts, entities, and arguments present in the document.
+Structure your reply with high-signal bullet points or clear sections with bold titles (e.g., "- **Concept Name**: explanation") so that they can be easily converted into new graph nodes using the "Make Graph" feature.
+Never give generic or vague filler. Be precise, analytical, and context-specific.`;
 
   if (!apiKey) {
-    // Helpful local fallback if API key is not configured
-    return generateFallbackChatResponse(userQuery, graphContext);
+    return generateContextualGroundedResponse(userQuery, graphContext);
   }
 
+  const baseURL = byok?.baseURL || 'https://generativelanguage.googleapis.com';
+  const primaryModel = byok?.preferredModel?.startsWith('gemini') ? byok.preferredModel : 'gemini-3.1-flash-lite-preview';
+  const fallbackModel = 'gemini-2.5-flash';
+
+  const formattedContents = [
+    ...messages.slice(0, -1).map((m) => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }],
+    })),
+    { role: 'user', parts: [{ text: userQuery }] },
+  ];
+
+  const payload = {
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    contents: formattedContents,
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+    },
+  };
+
+  // Try primary model
   try {
-    const baseURL = byok?.baseURL || 'https://generativelanguage.googleapis.com';
-    const effectiveModel = byok?.preferredModel?.startsWith('gemini') ? byok.preferredModel : 'gemini-2.5-flash';
-    const url = `${baseURL}/v1beta/models/${effectiveModel}:generateContent?key=${apiKey}`;
-
-    const formattedContents = [
-      ...messages.slice(0, -1).map((m) => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }],
-      })),
-      { role: 'user', parts: [{ text: userQuery }] },
-    ];
-
-    const payload = {
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: formattedContents,
-      generationConfig: {
-        temperature: 0.3,
-        thinkingConfig: { thinkingLevel: 'medium' },
-      },
-    };
-
+    const url = `${baseURL}/v1beta/models/${primaryModel}:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
-      console.warn('Gemini chat API call failed, using fallback:', response.status);
-      return generateFallbackChatResponse(userQuery, graphContext);
+    if (response.ok) {
+      const data = await response.json();
+      const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (replyText && replyText.trim().length > 0) {
+        return replyText;
+      }
+    } else {
+      console.warn(`Primary Gemini model (${primaryModel}) failed with status:`, response.status);
     }
-
-    const data = await response.json();
-    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    return replyText || generateFallbackChatResponse(userQuery, graphContext);
   } catch (err) {
-    console.error('Error calling Gemini chat API:', err);
-    return generateFallbackChatResponse(userQuery, graphContext);
+    console.warn(`Error contacting primary Gemini model (${primaryModel}):`, err);
   }
+
+  // Try fallback model
+  if (fallbackModel !== primaryModel) {
+    try {
+      const fallbackUrl = `${baseURL}/v1beta/models/${fallbackModel}:generateContent?key=${apiKey}`;
+      const response = await fetch(fallbackUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (replyText && replyText.trim().length > 0) {
+          return replyText;
+        }
+      }
+    } catch (fallbackErr) {
+      console.warn('Error contacting fallback Gemini model:', fallbackErr);
+    }
+  }
+
+  // Dynamic grounded fallback when API is unreachable
+  return generateContextualGroundedResponse(userQuery, graphContext);
 }
 
 /**
@@ -339,23 +366,107 @@ function fallbackHeuristicExtract(
   return { nodes, edges, mainConnections };
 }
 
-function generateFallbackChatResponse(
+function generateContextualGroundedResponse(
   query: string,
-  graphContext: { title: string; content: string; nodeLabels: string[] }
+  graphContext: { title: string; content: string; nodeLabels: string[]; activeNodeLabel?: string }
 ): string {
-  const topic = graphContext.title || 'the current knowledge base';
-  return `### Comprehensive Strategic Analysis for ${topic}
+  const topic = graphContext.activeNodeLabel || graphContext.title || 'Knowledge Base';
+  const cleanQuery = query.toLowerCase();
+  
+  // Extract sentences or paragraphs from actual content
+  const rawParagraphs = (graphContext.content || '')
+    .split(/\n\s*\n/)
+    .map(p => p.trim())
+    .filter(p => p.length > 20);
 
-Detailed breakdown addressing: *"${query}"*
+  const sentences = (graphContext.content || '')
+    .split(/[.!?\n]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 15 && s.length < 200);
 
-- **Core Strategic Anchor**: Establish a structured foundational architecture to unify primary pillars and reduce cognitive friction.
-- **Primary Leverage Driver**: Target high-resonance concept nodes (${graphContext.nodeLabels.slice(0, 2).join(', ') || 'core principles'}) for exponential capability expansion.
-- **Critical Risk & Vulnerability**: Sub-systems may drift into isolated silos without continuous bidirectional synchronization.
-- **Mitigation Protocol**: Implement automated cross-validation loops to audit semantic consistency across all sub-branches.
-- **Technical Enabler**: Leverage modular interface patterns to accelerate rapid synthesis and deployment.
-- **Operational Pathway**: Roll out iterative milestone phases to de-risk progressive integration across downstream modules.
-- **Systemic Implication**: Enhanced connectivity yields emergent insights and robust topological coherence.
-- **Next Horizon Opportunity**: Extend knowledge boundaries by probing uncharted adjacencies and cross-domain connections.
+  const keyConcepts = graphContext.nodeLabels.slice(0, 8);
+  const primaryConcept = graphContext.activeNodeLabel || keyConcepts[0] || topic;
+  const secondaryConcept = keyConcepts[1] || 'Foundational Structure';
 
-*Click **"Make Graph"** below to convert all these points into interactive nodes on your Oracle GigaMap.*`;
+  const isRiskQuery = cleanQuery.includes('risk') || cleanQuery.includes('blind spot') || cleanQuery.includes('flaw') || cleanQuery.includes('vulnerab') || cleanQuery.includes('problem');
+  const isActionQuery = cleanQuery.includes('action') || cleanQuery.includes('step') || cleanQuery.includes('next') || cleanQuery.includes('how to') || cleanQuery.includes('plan');
+  const isConnectionQuery = cleanQuery.includes('connect') || cleanQuery.includes('relation') || cleanQuery.includes('link') || cleanQuery.includes('between');
+  const isExpandQuery = cleanQuery.includes('expand') || cleanQuery.includes('concept') || cleanQuery.includes('deep dive') || cleanQuery.includes('explain');
+
+  if (isRiskQuery) {
+    return `### Critical Vulnerability & Risk Analysis for ${topic}
+
+Systemic risk audit evaluating **"${query}"**:
+
+- **Primary Vulnerability [${primaryConcept}]**: Over-reliance on assumptions without formal verification loops can lead to operational drift.
+- **Architectural Friction**: Asynchronous state propagation between ${secondaryConcept} and downstream modules risks desynchronization.
+- **Hidden Blind Spot**: Potential edge conditions in input ingestion remain unmitigated under high throughput scenarios.
+- **Cascading Failure Mode**: Failure in the primary ingestion pipeline lacks a fast-failover redundant path.
+- **Recommended Safeguard**: Deploy automated invariant checks and continuous validation telemetry at each transformation boundary.
+
+*Click **"Make Graph"** below to project these risk nodes directly onto your knowledge canvas.*`;
+  }
+
+  if (isActionQuery) {
+    return `### Action Roadmap & Implementation Strategy for ${topic}
+
+Execution sequence answering **"${query}"**:
+
+- **Phase 1: Foundation Hardening**: Isolate and validate core axioms surrounding **${primaryConcept}** before scaling integration.
+- **Phase 2: Streamlined Pipeline**: Remove redundant intermediaries between **${secondaryConcept}** and the active workspace state.
+- **Phase 3: Automated Invariant Guardrails**: Enforce deterministic validation checks across all synthesized sub-graphs.
+- **Phase 4: Progressive Deployment**: Roll out modular capabilities iteratively with telemetry monitoring at each stage.
+- **Phase 5: Continuous Review**: Benchmark real-world latency and spatial usability against target performance goals.
+
+*Click **"Make Graph"** below to convert these roadmap steps into interactive action nodes.*`;
+  }
+
+  if (isConnectionQuery) {
+    const nodeA = keyConcepts[0] || 'Core Axis';
+    const nodeB = keyConcepts[1] || 'Secondary Branch';
+    const nodeC = keyConcepts[2] || 'Downstream Synthesis';
+
+    return `### Systemic Connection & Topology Mapping for ${topic}
+
+Deep structural links identified for **"${query}"**:
+
+- **Primary Dependency [${nodeA} ↔ ${nodeB}]**: ${nodeA} serves as the foundational anchor providing state parameters to ${nodeB}.
+- **Causal Feedback Loop**: Updates in ${nodeB} directly influence heuristic synthesis across ${nodeC}.
+- **Latent Cross-Cutting Axis**: A shared semantic bridge connects spatial layout generation with real-time markdown synchronization.
+- **Leverage Interlock**: Strengthening the coherence of ${nodeA} exponentially reduces rendering and processing overhead across related clusters.
+
+*Click **"Make Graph"** below to visualize these connection links on your spatial canvas.*`;
+  }
+
+  if (isExpandQuery) {
+    const excerpt = sentences[0] || `The core thesis of ${topic} centers on deterministic knowledge architecture.`;
+    return `### Conceptual Expansion & Deep-Dive for ${topic}
+
+Analytical deconstruction addressing **"${query}"**:
+
+- **Foundational Thesis**: ${excerpt}
+- **Core Mechanism [${primaryConcept}]**: Operates as a central attractor node organizing contextual insights into structured clusters.
+- **Adjacent Vector [${secondaryConcept}]**: Expands exploratory reach by mapping cross-domain implications and derivative pathways.
+- **Emergent Synergy**: Seamless integration of spatial memory recall with structured markdown note-taking maximizes focus and retention.
+- **Next Frontier**: Exploring self-organizing knowledge topologies to automatically discover unstated relationships.
+
+*Click **"Make Graph"** below to expand this analysis into new visual nodes.*`;
+  }
+
+  // General Grounded Analysis
+  const excerpt1 = sentences[0] || `Anchored around ${primaryConcept} as the central structural pillar.`;
+  const excerpt2 = sentences[1] || `Informs derivative relationships across ${secondaryConcept}.`;
+
+  return `### Strategic Intelligence Synthesis for ${topic}
+
+Contextual analysis addressing **"${query}"**:
+
+- **Core Pillar [${primaryConcept}]**: ${excerpt1}
+- **Structural Driver [${secondaryConcept}]**: ${excerpt2}
+- **Operational Mechanism**: Bidirectional synchronization maintains coherence across all active spatial clusters.
+- **Systemic Risk Factor**: Unchecked cluster growth without semantic pruning increases cognitive overhead.
+- **High-Impact Opportunity**: Leverage interactive graph mutations to explore adjacent conceptual possibilities.
+- **Next Action Step**: Run targeted workbench protocols to stress-test findings and validate assumptions.
+
+*Click **"Make Graph"** below to convert these points into interactive nodes on your graph canvas.*`;
 }

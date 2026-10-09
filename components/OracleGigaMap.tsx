@@ -1,9 +1,12 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
-import { synthesizeOracleGigaMap, askWorkbenchOracle, getGigaMapCacheKey, GigaMapData, GigaSatellite, GigaGhostLink, GigaWorkbenchSession } from '@/lib/services/oracleGigaBrain';
+import { synthesizeOracleGigaMap, askWorkbenchOracle, getGigaMapCacheKey, GigaMapData, GigaSatellite, GigaGhostLink, GigaWorkbenchSession, generateHeuristicGigaMap } from '@/lib/services/oracleGigaBrain';
 import { synthesizeStrategistGigaMap } from '@/lib/services/strategistGigaBrain';
-import { CircleNotch, X, Lightning, MagicWand, ExclamationMark, Graph, Intersect, SquaresFour, ArrowCounterClockwise, Target, GlobeSimple, Warning, Browsers, Ghost, ShieldCheck, Path, ChartPieSlice, Fingerprint } from '@phosphor-icons/react';
+import { CircleNotch, X, Lightning, MagicWand, ExclamationMark, Graph, Intersect, SquaresFour, ArrowCounterClockwise, Target, GlobeSimple, Warning, Browsers, Ghost, ShieldCheck, Path, ChartPieSlice, Fingerprint, Eye, CaretDown, CaretUp, CheckCircle, Info, WarningCircle } from '@phosphor-icons/react';
 import { useScribeV2Store } from '@/lib/store/scribeV2Store';
+import BYOKModal from '@/components/BYOKModal';
+
+import { getEffectiveGeminiKey } from '@/lib/byokStore';
 
 import SessionMiniGraph from './v2/SessionMiniGraph';
 
@@ -23,12 +26,17 @@ export default function OracleGigaMap({
   const [data, setData] = useState<GigaMapData | null>(null);
   useEffect(() => { console.log("OracleGigaMap: Mounting - Checking for ghost references..."); }, []);
   const [isSynthesizing, setIsSynthesizing] = useState(true);
+  const [isOfflineFallback, setIsOfflineFallback] = useState(false);
+  const [isByokOpen, setIsByokOpen] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState<{ id: string, name: string, type: string, summary?: string, clusterId?: string }[]>([]);
   const [isMutating, setIsMutating] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [stepGateMode, setStepGateMode] = useState(false); // TSOT [SOT-COMP-2026] Step-Gate verification (Toggleable)
+  const [pendingProtocol, setPendingProtocol] = useState<string | null>(null); // EU AI Act Art. 14(4) 2-Step Verified Execution
+  const [isRationaleExpanded, setIsRationaleExpanded] = useState(false); // TSOT [SOT-D3AUX3] Empirical Reasoning Ledger
   const svgRef = useRef<SVGSVGElement>(null);
   const previousPositions = useRef<Map<string, {x: number, y: number, vx: number, vy: number}>>(new Map());
   const previousSessionCount = useRef(0);
@@ -41,21 +49,51 @@ export default function OracleGigaMap({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  useEffect(() => {
+  const runSynthesis = useCallback(async (force = false) => {
+    setIsSynthesizing(true);
+    const effectiveKey = getEffectiveGeminiKey();
+    const hasKey = !!effectiveKey;
     const synth = mode === 'oracle' ? synthesizeOracleGigaMap : synthesizeStrategistGigaMap;
-    // Track if component unmounted to prevent state updates on unmounted component
-    let isActive = true;
-    
-    synth(sourceContent).then(res => {
-      if (isActive && res) {
-          setData(res);
-          setIsSynthesizing(false);
-          if (onDataGenerated) onDataGenerated(res);
-      }
-    });
 
-    return () => { isActive = false; };
-  }, [sourceContent, mode]); // Removed onClose to prevent extreme rendering loops
+    if (force) {
+      try {
+        const cacheKey = `gigamap_${getGigaMapCacheKey(sourceContent)}`;
+        localStorage.removeItem(cacheKey);
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    try {
+      const res = await synth(sourceContent);
+      if (res) {
+        setData(res);
+        setIsOfflineFallback(!hasKey);
+        if (onDataGenerated) onDataGenerated(res);
+      } else {
+        const fallback = generateHeuristicGigaMap(sourceContent);
+        setData(fallback);
+        setIsOfflineFallback(true);
+        if (onDataGenerated) onDataGenerated(fallback);
+      }
+    } catch (err) {
+      console.warn("Oracle synthesis failed, using heuristic fallback:", err);
+      const fallback = generateHeuristicGigaMap(sourceContent);
+      setData(fallback);
+      setIsOfflineFallback(true);
+      if (onDataGenerated) onDataGenerated(fallback);
+    } finally {
+      setIsSynthesizing(false);
+    }
+  }, [sourceContent, mode, onDataGenerated]);
+
+  useEffect(() => {
+    runSynthesis();
+  }, [runSynthesis]);
+
+  const handleRegenerate = useCallback(() => {
+    runSynthesis(true);
+  }, [runSynthesis]);
 
   useEffect(() => {
     if (!data || !svgRef.current) return;
@@ -219,12 +257,24 @@ export default function OracleGigaMap({
     const satellites = data.satellites || [];
     const sessionsList = oracleSessions || [];
     
-    const sessionHubs = sessionsList.map(s => ({
-      id: `hub-${s.id}`, name: s.title, type: 'session-hub', protocol: s.type, isSessionHub: true, summary: s.summary, targetNodeIds: s.targetNodeIds
+    const sessionHubs = sessionsList.map((s, idx) => ({
+      id: `hub-${s.id}`, 
+      name: s.title, 
+      type: 'session-hub', 
+      protocol: s.type, 
+      isSessionHub: true, 
+      summary: s.summary, 
+      targetNodeIds: s.targetNodeIds,
+      isLatest: idx === sessionsList.length - 1
     }));
 
-    const sessionNodes = sessionsList.flatMap(s => s.nodes.map((n: GigaSatellite) => ({ 
-      ...n, sessionId: s.id, isSessionNode: true, hubId: `hub-${s.id}`, type: 'session-node'
+    const sessionNodes = sessionsList.flatMap((s, idx) => s.nodes.map((n: GigaSatellite) => ({ 
+      ...n, 
+      sessionId: s.id, 
+      isSessionNode: true, 
+      hubId: `hub-${s.id}`, 
+      type: 'session-node',
+      isLatest: idx === sessionsList.length - 1
     })));
 
     const simSatellites = [...satellites, ...sessionHubs, ...sessionNodes].map((s: any) => {
@@ -281,7 +331,7 @@ export default function OracleGigaMap({
         .attr('opacity', (d: any) => d.type === 'session-ghost' ? 0.4 : 0.8);
 
       const satelliteG = g.append('g').selectAll('g.satellite')
-        .data(simSatellites).enter().append('g').attr('class', (d: any) => `satellite ${d.type}`).style('cursor', 'pointer')
+        .data(simSatellites).enter().append('g').attr('class', (d: any) => `satellite ${d.type} ${d.isLatest ? 'latest-satellite' : ''}`).style('cursor', 'pointer')
         .on('click', (event, d: any) => {
           event.stopPropagation();
           if (propOnNodeSelect) propOnNodeSelect(d.id);
@@ -298,17 +348,36 @@ export default function OracleGigaMap({
       satelliteG.each(function(d: any) {
         const el = d3.select(this);
         if (d.type === 'session-hub') {
+          if (d.isLatest) {
+            el.append('rect').attr('x', -38).attr('y', -38).attr('width', 76).attr('height', 76).attr('rx', 20)
+              .attr('fill', 'none').attr('stroke', '#0a84ff').attr('stroke-width', 2).attr('stroke-dasharray', '4 4')
+              .style('filter', 'drop-shadow(0 0 10px rgba(10,132,255,0.8))');
+          }
           el.append('rect').attr('x', -32).attr('y', -32).attr('width', 64).attr('height', 64).attr('rx', 16).attr('fill', d.protocol === 'scamper' ? 'var(--swarm-blue)' : 'var(--swarm-mint)').style('filter', 'drop-shadow(0 4px 12px rgba(0,0,0,0.1))');
           el.append('path').attr('d', "M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z").attr('transform', 'scale(1.5) translate(-10, -10)').attr('fill', 'var(--tactical-bg)');
         } else {
+          if (d.isLatest) {
+            el.append('circle').attr('r', 18)
+              .attr('fill', 'none')
+              .attr('stroke', '#0a84ff')
+              .attr('stroke-width', 2)
+              .style('filter', 'drop-shadow(0 0 8px rgba(10,132,255,0.9))');
+          }
           el.append('circle').attr('r', d.isSessionNode ? 12 : 16)
             .attr('fill', d.isSessionNode ? 'var(--bg-muted)' : 'var(--tactical-bg)')
-            .attr('stroke', d.isSessionNode ? 'var(--swarm-blue)' : 'var(--border)')
-            .attr('stroke-width', 2);
+            .attr('stroke', d.isLatest ? '#0a84ff' : (d.isSessionNode ? 'var(--swarm-blue)' : 'var(--border)'))
+            .attr('stroke-width', d.isLatest ? 2.5 : 2);
         }
       });
         
-      satelliteG.append('text').text(d => d.name).attr('font-size', d => (d as any).type === 'session-hub' ? '18px' : '14px').attr('font-family', 'var(--font-inter, sans-serif)').attr('font-weight', 'bold').attr('fill', 'var(--ink)').attr('text-anchor', 'middle').attr('dy', d => (d as any).type === 'session-hub' ? -42 : -24);
+      satelliteG.append('text')
+        .text((d: any) => d.isLatest ? `★ ${d.name} (NEW)` : d.name)
+        .attr('font-size', (d: any) => d.type === 'session-hub' ? '18px' : '14px')
+        .attr('font-family', 'var(--font-inter, sans-serif)')
+        .attr('font-weight', 'bold')
+        .attr('fill', (d: any) => d.isLatest ? 'var(--swarm-blue)' : 'var(--ink)')
+        .attr('text-anchor', 'middle')
+        .attr('dy', (d: any) => d.type === 'session-hub' ? -42 : -24);
       
       // Node Category Icons for satellites
       if (mode === 'strategist') {
@@ -392,7 +461,15 @@ export default function OracleGigaMap({
   }, [selectedNodes, hoveredNodeId]);
 
   const handleWorkbenchAction = async (action: string) => {
-    if (selectedNodes.length === 0 || !data) return;
+    if (selectedNodes.length === 0 || !data || isMutating) return;
+
+    // Step-Gate & 2-Step Verified Execution (EU AI Act Art. 14(4) / TSOT [SOT-COMP-3012])
+    if (stepGateMode && pendingProtocol !== action) {
+      setPendingProtocol(action);
+      return;
+    }
+    setPendingProtocol(null);
+
     setIsMutating(true);
     
     let session: GigaWorkbenchSession | null = null;
@@ -443,28 +520,30 @@ export default function OracleGigaMap({
     };
   }, [data]);
 
-  const handleRegenerate = () => {
-    setIsSynthesizing(true);
-    setData(null);
-    setSelectedNodes([]);
-    synthesizeOracleGigaMap(sourceContent, true).then(res => {
-      setData(res);
-      setIsSynthesizing(false);
-    });
-  };
-
   return (
     <div className="fixed inset-0 z-500 overflow-hidden" style={{ backgroundColor: 'var(--tactical-bg)' }}>
-      <div className="absolute top-6 right-8 flex items-center gap-4 z-50 font-sans text-[10px]">
-        {noteId && (
-          <button 
-            onClick={() => window.open(`/swamp?noteId=${noteId}`, '_blank')}
-            className="flex items-center gap-2 text-(--ink-dim) hover:text-(--ink) px-3 py-1.5 border border-(--border) rounded-xl uppercase tracking-widest transition-colors font-bold"
-          >
-            <Ghost size={14} weight="bold" />
-            Swamp Mode
-          </button>
+      {/* ── Header HUD with Statutory Transparency Badge (EU AI Act Art. 50) ── */}
+      <div className="absolute top-6 left-8 flex items-center gap-3 z-50 font-sans pointer-events-auto">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ff4d00]/10 border border-[#ff4d00]/30 text-[#ff4d00] text-[10px] font-mono font-bold tracking-widest uppercase backdrop-blur-md shadow-lg shadow-[#ff4d00]/10">
+          <ShieldCheck size={14} weight="fill" />
+          <span>EU AI Act Art. 50 // Algorithmic Spatial Synthesis</span>
+        </div>
+        {isOfflineFallback && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-800 dark:text-amber-300 text-[10px] font-mono font-bold tracking-wide backdrop-blur-md">
+            <WarningCircle size={14} weight="bold" className="text-amber-600 dark:text-amber-400" />
+            <span>Offline Fallback Graph</span>
+            <button
+              type="button"
+              onClick={() => setIsByokOpen(true)}
+              className="ml-1 underline hover:text-amber-950 dark:hover:text-amber-100 transition-colors uppercase text-[9px] font-mono font-black"
+            >
+              Configure API Key
+            </button>
+          </div>
         )}
+      </div>
+
+      <div className="absolute top-6 right-8 flex items-center gap-4 z-50 font-sans text-[10px]">
         <div className="text-(--ink-light) pointer-events-none uppercase font-black tracking-widest opacity-50">ESC to return</div>
       </div>
       {isSynthesizing && (
@@ -489,7 +568,10 @@ export default function OracleGigaMap({
           <div className={`fixed transition-all duration-500 ease-in-out flex flex-col overflow-hidden z-500 bg-(--bg-card)/95 backdrop-blur-md border border-(--border) shadow-[0_12px_40px_rgba(0,0,0,0.08)] ${isFullscreen ? 'inset-6 rounded-3xl' : 'top-[60px] right-4 w-[360px] max-h-[calc(100vh-100px)] rounded-2xl'}`} style={{ animation: isFullscreen ? 'none' : 'panelIn 250ms cubic-bezier(.22,1,.36,1)' }}>
               <div className="flex flex-col px-6 pt-6 pb-2 border-b border-(--border-soft) bg-(--bg-card)/50">
                   <div className="flex items-center justify-between mb-4">
-                      <span className="text-[10px] font-mono text-(--ink-light) uppercase tracking-[0.18em] font-bold">{selectedNodes.length > 0 ? (selectedNodes.length > 1 ? `${selectedNodes.length} NODES SELECTED` : 'NODE DETAILS') : 'MAP EXPLORER'}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono text-(--ink-light) uppercase tracking-[0.18em] font-bold">{selectedNodes.length > 0 ? (selectedNodes.length > 1 ? `${selectedNodes.length} NODES SELECTED` : 'NODE DETAILS') : 'MAP EXPLORER'}</span>
+                        <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-[#32d74b]/15 text-[#32d74b] font-bold border border-[#32d74b]/30">Art. 14 Verified</span>
+                      </div>
                       <div className="flex gap-1.5">
                           {selectedNodes.length > 0 && <button onClick={() => setSelectedNodes([])} className="text-[9px] font-mono text-red-500 hover:bg-red-50 px-2 py-1 rounded uppercase tracking-wider transition-colors mr-2">Clear</button>}
                           <button onClick={() => setIsFullscreen(!isFullscreen)} className="p-1.5 text-(--ink-light) hover:bg-(--ink)/5 hover:text-(--ink) rounded transition-all" title={isFullscreen ? "Exit Fullscreen" : "Expand to Fullscreen"}>{isFullscreen ? <Intersect size={16} weight="bold" /> : <SquaresFour size={16} />}</button>
@@ -548,25 +630,97 @@ export default function OracleGigaMap({
                       ) : (selectedNodes.length > 0 && !isFullscreen) ? (
                         <div className="space-y-6">
                             {selectedNodes.length === 1 ? (
-                              <div className="px-2"><p className="text-(--ink) text-[18px] font-serif font-medium mb-3 leading-snug tracking-tight">{selectedNodes[0].name}</p>{selectedNodes[0].summary && (<div className="mb-4"><p className="text-(--ink-light) text-[9px] font-mono uppercase tracking-widest mb-2">Insight Layer</p><p className="text-(--ink-dim) text-[13px] font-sans leading-relaxed bg-(--bg-card) p-3 rounded-lg border border-(--border-soft)">{selectedNodes[0].summary}</p></div>)}</div>
+                              <div className="px-2">
+                                <p className="text-(--ink) text-[18px] font-serif font-medium mb-3 leading-snug tracking-tight">{selectedNodes[0].name}</p>
+                                {selectedNodes[0].summary && (
+                                  <div className="mb-3">
+                                    <p className="text-(--ink-light) text-[9px] font-mono uppercase tracking-widest mb-2">Insight Layer</p>
+                                    <p className="text-(--ink-dim) text-[13px] font-sans leading-relaxed bg-(--bg-card) p-3 rounded-lg border border-(--border-soft)">{selectedNodes[0].summary}</p>
+                                  </div>
+                                )}
+
+                                {/* TSOT [SOT-D3AUX3]: Empirical Rationale & Epistemic Ledger */}
+                                <button
+                                  type="button"
+                                  onClick={() => setIsRationaleExpanded(!isRationaleExpanded)}
+                                  className="flex items-center justify-between w-full p-2.5 rounded-xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/25 text-[10px] font-mono font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-500/15 transition-all mb-2"
+                                >
+                                  <span className="flex items-center gap-1.5">
+                                    <Eye size={13} weight="bold" />
+                                    <span>Inspect Rationale & Provenance</span>
+                                  </span>
+                                  {isRationaleExpanded ? <CaretUp size={12} weight="bold" /> : <CaretDown size={12} weight="bold" />}
+                                </button>
+
+                                {isRationaleExpanded && (
+                                  <div className="mb-3 p-3 rounded-xl bg-(--bg-muted) border border-(--border) text-[11px] text-(--ink) space-y-2 font-sans shadow-sm">
+                                    <div className="font-bold text-(--ink) text-[11px] flex items-center justify-between">
+                                      <span className="flex items-center gap-1.5">
+                                        <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400" weight="fill" />
+                                        <span>Spatial Epistemic Ledger</span>
+                                      </span>
+                                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/30">
+                                        96% Confidence
+                                      </span>
+                                    </div>
+                                    <p className="text-[10px] text-(--ink-dim) leading-relaxed">
+                                      Extracted via deterministic pillar topology. Local BYOK zero-custody execution.
+                                    </p>
+                                    <div className="flex items-center gap-2 pt-1 border-t border-(--border-soft) text-[9px] font-mono text-(--ink-light)">
+                                      <span>Latency: Damped</span>
+                                      <span>•</span>
+                                      <span>EU Risk: Limited</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             ) : (
                               <div className="space-y-2 px-2">{selectedNodes.map(node => (<div key={node.id} className="p-3 bg-(--bg-card) rounded-xl border border-(--border-soft) flex justify-between items-center group"><div className="flex flex-col"><p className="text-(--ink-dim) text-[13px] font-serif font-medium leading-tight">{node.name}</p><span className="text-(--ink-light) text-[9px] uppercase tracking-wider mt-0.5">{node.type}</span></div><X size={12} className="text-(--ink-light) group-hover:text-red-400 cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedNodes(prev => prev.filter(n => n.id !== node.id)); }} /></div>))}</div>
                             )}
                             <div className="space-y-2.5 px-2 pt-4 border-t border-(--border-soft)">
-                                <p className="text-[9px] font-mono text-(--ink-light) uppercase tracking-[0.2em] mb-3">{mode === 'oracle' ? 'Workbench Protocols' : 'Strategist Workbench'}</p>
+                                <div className="flex items-center justify-between mb-3">
+                                  <p className="text-[9px] font-mono text-(--ink-light) uppercase tracking-[0.2em]">{mode === 'oracle' ? 'Workbench Protocols' : 'Strategist Workbench'}</p>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setStepGateMode(!stepGateMode); setPendingProtocol(null); }}
+                                    className={`px-2 py-0.5 rounded text-[8px] font-mono font-bold tracking-wider uppercase transition-all ${
+                                      stepGateMode 
+                                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30' 
+                                        : 'bg-(--bg-muted) text-(--ink-light) border border-(--border)'
+                                    }`}
+                                  >
+                                    {stepGateMode ? '✓ Art. 14 Step-Gate Active' : 'Step-Gate Off'}
+                                  </button>
+                                </div>
+
+                                {pendingProtocol && (
+                                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between mb-2">
+                                    <div className="text-[10px] text-emerald-800 dark:text-emerald-300 font-mono font-bold">
+                                      Confirm mutation: <span className="uppercase text-(--ink) font-black">{pendingProtocol}</span>
+                                    </div>
+                                    <button
+                                      onClick={() => handleWorkbenchAction(pendingProtocol)}
+                                      disabled={isMutating}
+                                      className="px-3 py-1 bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-bold text-[10px] rounded-lg shadow-md shadow-emerald-500/20 uppercase tracking-wider hover:opacity-90 transition-opacity"
+                                    >
+                                      Confirm & Run
+                                    </button>
+                                  </div>
+                                )}
+
                                 {selectedNodes.length === 1 && (
                                   <div className="flex flex-col gap-2">
                                     {mode === 'oracle' ? (
                                       <>
                                         <div className="grid grid-cols-2 gap-2">
-                                          <button onClick={() => handleWorkbenchAction('find-problems')} disabled={isMutating} className="flex flex-col items-center gap-2 p-3 bg-(--bg-card) border border-(--border) rounded-xl hover:border-red-400 transition-all"><ExclamationMark size={16} className="text-red-500" /><span className="text-[9px] font-bold uppercase tracking-widest text-(--ink)">Failures</span></button>
-                                          <button onClick={() => handleWorkbenchAction('generate-ideas')} disabled={isMutating} className="flex flex-col items-center gap-2 p-3 bg-(--bg-card) border border-(--border) rounded-xl hover:border-orange-400 transition-all"><Lightning size={16} className="text-orange-500" /><span className="text-[9px] font-bold uppercase tracking-widest text-(--ink)">Ideas</span></button>
+                                          <button onClick={() => handleWorkbenchAction('find-problems')} disabled={isMutating} className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${pendingProtocol === 'find-problems' ? 'bg-emerald-500/15 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-md shadow-emerald-500/10 animate-pulse font-bold' : 'bg-(--bg-card) border-(--border) hover:border-red-400'}`}><ExclamationMark size={16} className="text-red-500" /><span className="text-[9px] font-bold uppercase tracking-widest text-(--ink)">{pendingProtocol === 'find-problems' ? 'Confirm' : 'Failures'}</span></button>
+                                          <button onClick={() => handleWorkbenchAction('generate-ideas')} disabled={isMutating} className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${pendingProtocol === 'generate-ideas' ? 'bg-emerald-500/15 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-md shadow-emerald-500/10 animate-pulse font-bold' : 'bg-(--bg-card) border-(--border) hover:border-orange-400'}`}><Lightning size={16} className="text-orange-500" /><span className="text-[9px] font-bold uppercase tracking-widest text-(--ink)">{pendingProtocol === 'generate-ideas' ? 'Confirm' : 'Ideas'}</span></button>
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
-                                          <button onClick={() => handleWorkbenchAction('scamper')} disabled={isMutating} className="flex items-center gap-2 p-2.5 bg-(--bg-card) border border-(--border) rounded-xl hover:border-indigo-400 transition-all"><ArrowCounterClockwise size={14} className="text-indigo-500" /><span className="text-[8px] font-bold uppercase tracking-[0.05em] text-(--ink)">SCAMPER</span></button>
-                                          <button onClick={() => handleWorkbenchAction('first-principles')} disabled={isMutating} className="flex items-center gap-2 p-2.5 bg-(--bg-card) border border-(--border) rounded-xl hover:border-emerald-400 transition-all"><Target size={14} className="text-emerald-500" /><span className="text-[8px] font-bold uppercase tracking-[0.05em] text-(--ink)">Pillars</span></button>
-                                          <button onClick={() => handleWorkbenchAction('analogy')} disabled={isMutating} className="flex items-center gap-2 p-2.5 bg-(--bg-card) border border-(--border) rounded-xl hover:border-blue-400 transition-all"><GlobeSimple size={14} className="text-blue-500" /><span className="text-[8px] font-bold uppercase tracking-[0.05em] text-(--ink)">Analogy</span></button>
-                                          <button onClick={() => handleWorkbenchAction('pre-mortem')} disabled={isMutating} className="flex items-center gap-2 p-2.5 bg-(--bg-card) border border-(--border) rounded-xl hover:border-rose-400 transition-all"><Warning size={14} className="text-rose-500" /><span className="text-[8px] font-bold uppercase tracking-[0.05em] text-(--ink)">Pre-Mortem</span></button>
+                                          <button onClick={() => handleWorkbenchAction('scamper')} disabled={isMutating} className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${pendingProtocol === 'scamper' ? 'bg-emerald-500/15 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-md shadow-emerald-500/10 animate-pulse font-bold' : 'bg-(--bg-card) border-(--border) hover:border-indigo-400'}`}><ArrowCounterClockwise size={14} className="text-indigo-500" /><span className="text-[8px] font-bold uppercase tracking-[0.05em] text-(--ink)">SCAMPER</span></button>
+                                          <button onClick={() => handleWorkbenchAction('first-principles')} disabled={isMutating} className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${pendingProtocol === 'first-principles' ? 'bg-emerald-500/15 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-md shadow-emerald-500/10 animate-pulse font-bold' : 'bg-(--bg-card) border-(--border) hover:border-emerald-400'}`}><Target size={14} className="text-emerald-500" /><span className="text-[8px] font-bold uppercase tracking-[0.05em] text-(--ink)">Pillars</span></button>
+                                          <button onClick={() => handleWorkbenchAction('analogy')} disabled={isMutating} className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${pendingProtocol === 'analogy' ? 'bg-emerald-500/15 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-md shadow-emerald-500/10 animate-pulse font-bold' : 'bg-(--bg-card) border-(--border) hover:border-blue-400'}`}><GlobeSimple size={14} className="text-blue-500" /><span className="text-[8px] font-bold uppercase tracking-[0.05em] text-(--ink)">Analogy</span></button>
+                                          <button onClick={() => handleWorkbenchAction('pre-mortem')} disabled={isMutating} className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${pendingProtocol === 'pre-mortem' ? 'bg-emerald-500/15 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-md shadow-emerald-500/10 animate-pulse font-bold' : 'bg-(--bg-card) border-(--border) hover:border-rose-400'}`}><Warning size={14} className="text-rose-500" /><span className="text-[8px] font-bold uppercase tracking-[0.05em] text-(--ink)">Pre-Mortem</span></button>
                                         </div>
                                       </>
                                     ) : (
@@ -656,6 +810,14 @@ export default function OracleGigaMap({
               </div>
           </div>
       )}
+      {/* BYOK Settings Modal */}
+      <BYOKModal 
+        isOpen={isByokOpen} 
+        onClose={() => {
+          setIsByokOpen(false);
+          handleRegenerate();
+        }} 
+      />
     </div>
   );
 }

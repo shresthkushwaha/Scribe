@@ -1,0 +1,2384 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scribe — Living Design System & UI Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;700;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ── Core Tokens ─────────────────────────────────────────────── */
+    :root, [data-theme="dark"] {
+      --bg-canvas: #07080a;
+      --bg-app: #0a0b0d;
+      --bg-surface: #0d0d0d;
+      --bg-card: #141414;
+      --bg-card-hover: #1a1a1a;
+      --bg-dock: rgba(26, 26, 26, 0.85);
+      --bg-glass: rgba(18, 20, 23, 0.72);
+
+      --ink: #f2f2f7;
+      --ink-secondary: #a1a1aa;
+      --ink-muted: #71717a;
+      --ink-faint: rgba(234, 234, 234, 0.2);
+      --ink-on-accent: #000000;
+
+      --border: rgba(255, 255, 255, 0.08);
+      --border-subtle: rgba(255, 255, 255, 0.04);
+      --border-strong: rgba(255, 255, 255, 0.16);
+      --border-focus: #ff4d00;
+
+      --signal-orange: #ff4d00;
+      --signal-orange-glow: rgba(255, 77, 0, 0.25);
+      --signal-red: #ff453a;
+      --signal-mint: #32d74b;
+      --signal-blue: #0a84ff;
+      --signal-violet: #bf5af2;
+      --signal-amber: #fbbf24;
+      --signal-rose: #ffccd9;
+
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 12px 24px -10px rgba(0, 0, 0, 0.6);
+      --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.8);
+      --shadow-glow: 0 0 24px rgba(255, 77, 0, 0.35);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --radius-pill: 9999px;
+
+      --font-sans: 'DM Sans', sans-serif;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="light"] {
+      --bg-canvas: #f4f5f8;
+      --bg-app: #fafafa;
+      --bg-surface: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f3f4f6;
+      --bg-dock: rgba(255, 255, 255, 0.9);
+      --bg-glass: rgba(255, 255, 255, 0.85);
+
+      --ink: #18191c;
+      --ink-secondary: #525866;
+      --ink-muted: #868c98;
+      --ink-faint: rgba(0, 0, 0, 0.2);
+      --ink-on-accent: #ffffff;
+
+      --border: rgba(0, 0, 0, 0.08);
+      --border-subtle: rgba(0, 0, 0, 0.04);
+      --border-strong: rgba(0, 0, 0, 0.16);
+
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 12px 24px -10px rgba(0, 0, 0, 0.12);
+      --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.16);
+      --shadow-glow: 0 0 20px rgba(255, 77, 0, 0.2);
+    }
+
+    [data-theme="oled"] {
+      --bg-canvas: #000000;
+      --bg-app: #000000;
+      --bg-surface: #080808;
+      --bg-card: #0d0d0d;
+      --bg-card-hover: #141414;
+      --bg-dock: rgba(10, 10, 10, 0.92);
+      --bg-glass: rgba(8, 8, 8, 0.85);
+
+      --border: rgba(255, 255, 255, 0.12);
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-strong: rgba(255, 255, 255, 0.24);
+
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.9);
+      --shadow-md: 0 12px 24px -10px rgba(0, 0, 0, 0.95);
+      --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 1);
+    }
+
+    /* ── Base Reset ─────────────────────────────────────────────── */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-canvas);
+      color: var(--ink);
+      line-height: 1.5;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Sidebar Navigation ─────────────────────────────────────── */
+    .sidebar {
+      width: 280px;
+      height: 100vh;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--signal-orange);
+      background: rgba(255, 77, 0, 0.1);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255, 77, 0, 0.25);
+      margin-bottom: 10px;
+    }
+
+    .brand-title {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--ink-secondary);
+      margin-top: 4px;
+    }
+
+    .sidebar-search {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--ink);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--signal-orange);
+      box-shadow: 0 0 0 2px rgba(255, 77, 0, 0.2);
+    }
+
+    .nav-list {
+      list-style: none;
+      padding: 16px 12px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .nav-category {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      padding: 12px 10px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover {
+      background: var(--bg-card-hover);
+      color: var(--ink);
+    }
+    .nav-item.active {
+      background: rgba(255, 77, 0, 0.12);
+      color: var(--signal-orange);
+      font-weight: 600;
+      border-left: 2px solid var(--signal-orange);
+    }
+
+    /* ── Main Content Area ──────────────────────────────────────── */
+    .main-wrapper {
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-toolbar {
+      position: sticky;
+      top: 0;
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+    }
+
+    .control-btn {
+      background: transparent;
+      border: none;
+      color: var(--ink-secondary);
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .control-btn:hover {
+      color: var(--ink);
+    }
+    .control-btn.active {
+      background: var(--bg-surface);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .content-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 32px 100px;
+    }
+
+    /* ── Section & Card Architecture ────────────────────────────── */
+    .doc-section {
+      margin-bottom: 64px;
+      scroll-margin-top: 80px;
+    }
+
+    .section-header {
+      margin-bottom: 24px;
+    }
+
+    .section-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--signal-orange);
+      margin-bottom: 6px;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .section-desc {
+      font-size: 14px;
+      color: var(--ink-secondary);
+      margin-top: 6px;
+      max-width: 760px;
+    }
+
+    .component-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .component-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .component-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .component-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      color: var(--ink-secondary);
+    }
+
+    .preview-stage {
+      background: var(--bg-card);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: 32px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+      position: relative;
+    }
+
+    /* ── Swatch Grid ────────────────────────────────────────────── */
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .swatch-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .swatch-item:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-md);
+    }
+
+    .swatch-color-box {
+      height: 60px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-end;
+      padding: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .swatch-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .swatch-role {
+      font-size: 11px;
+      color: var(--ink-muted);
+      margin-top: 2px;
+    }
+
+    /* ── Scribe UI Atoms ────────────────────────────────────────── */
+    .scribe-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .scribe-btn-primary {
+      background: var(--signal-orange);
+      color: #000000;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(255, 77, 0, 0.3);
+    }
+    .scribe-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(255, 77, 0, 0.45);
+    }
+
+    .scribe-btn-secondary {
+      background: var(--bg-card);
+      border-color: var(--border-strong);
+      color: var(--ink);
+    }
+    .scribe-btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .scribe-btn-ghost {
+      background: transparent;
+      color: var(--ink-secondary);
+    }
+    .scribe-btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--ink);
+    }
+
+    .scribe-btn-danger {
+      background: rgba(255, 69, 58, 0.12);
+      border-color: rgba(255, 69, 58, 0.3);
+      color: var(--signal-red);
+    }
+    .scribe-btn-danger:hover {
+      background: rgba(255, 69, 58, 0.2);
+    }
+
+    /* ── Live Scribe Cartridge Dock Preview ─────────────────────── */
+    .dock-preview-container {
+      background: #0a0b0d;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .live-dock {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg-dock);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      z-index: 2;
+    }
+
+    .dock-brand-zone {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 12px 4px 6px;
+      border-right: 1px solid var(--border);
+    }
+
+    .dock-cartridge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .dock-cartridge:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: var(--signal-orange);
+      transform: translateY(-2px);
+    }
+    .dock-cartridge.active {
+      background: rgba(255, 77, 0, 0.15);
+      border-color: var(--signal-orange);
+      color: var(--signal-orange);
+    }
+
+    /* ── Live Swamp Package Matrix ──────────────────────────────── */
+    .swamp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      width: 100%;
+    }
+
+    .swamp-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .swamp-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+    }
+    .swamp-card.selected {
+      border-color: var(--signal-orange);
+      background: rgba(255, 77, 0, 0.04);
+      box-shadow: 0 0 20px rgba(255, 77, 0, 0.15);
+    }
+
+    .swamp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .swamp-icon-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .swamp-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .swamp-desc {
+      font-size: 12px;
+      color: var(--ink-secondary);
+      line-height: 1.4;
+    }
+
+    /* ── Node Workbench & Cable Simulation ──────────────────────── */
+    .node-canvas-mock {
+      background: #07080a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-node {
+      width: 240px;
+      background: #141414;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      box-shadow: var(--shadow-md);
+      z-index: 2;
+    }
+
+    .node-header {
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    .node-port {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--signal-orange);
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 8px var(--signal-orange);
+    }
+
+    .cable-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .cable-path {
+      stroke: var(--signal-orange);
+      stroke-width: 2.5;
+      fill: none;
+      stroke-dasharray: 6 6;
+      animation: cablePulse 20s linear infinite;
+    }
+
+    @keyframes cablePulse {
+      to {
+        stroke-dashoffset: -1000;
+      }
+    }
+
+    /* ── Toast Notification ─────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--signal-orange);
+      color: var(--ink);
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+      z-index: 1000;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ── State Forcer Classes ───────────────────────────────────── */
+    body.force-hover .preview-stage .scribe-btn-secondary {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+    body.force-active .preview-stage .scribe-btn {
+      transform: scale(0.96) !important;
+    }
+    body.force-disabled .preview-stage .scribe-btn,
+    body.force-disabled .preview-stage input,
+    body.force-disabled .preview-stage select {
+      opacity: 0.35 !important;
+      pointer-events: none !important;
+    }
+    body.force-loading .preview-stage .scribe-btn {
+      position: relative;
+      color: transparent !important;
+    }
+    body.force-loading .preview-stage .scribe-btn::after {
+      content: "↻";
+      position: absolute;
+      color: var(--ink);
+      animation: spin 1s linear infinite;
+    }
+    body.force-error .preview-stage input,
+    body.force-error .preview-stage select {
+      border-color: var(--signal-red) !important;
+      background: rgba(255, 69, 58, 0.08) !important;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pingPulse {
+      0% { transform: scale(1); opacity: 0.7; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+
+    @keyframes statusBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    @keyframes progressPulse {
+      0%, 100% { width: 30%; }
+      50% { width: 80%; }
+    }
+
+    /* ── Flow Step Components ──────────────────────────────────── */
+    .flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 14px 16px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      min-width: 110px;
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .flow-step:hover {
+      border-color: var(--signal-orange);
+      transform: translateY(-2px);
+    }
+    .flow-step-active {
+      border-color: var(--signal-orange);
+      background: rgba(255, 77, 0, 0.09);
+      box-shadow: 0 0 16px rgba(255, 77, 0, 0.2);
+    }
+    .flow-step-mint {
+      border-color: rgba(50, 215, 75, 0.35);
+      background: rgba(50, 215, 75, 0.07);
+    }
+    .flow-step-amber {
+      border-color: rgba(251, 191, 36, 0.35);
+      background: rgba(251, 191, 36, 0.07);
+    }
+    .flow-step-violet {
+      border-color: rgba(191, 90, 242, 0.35);
+      background: rgba(191, 90, 242, 0.07);
+    }
+    .flow-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+    .flow-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink);
+      text-align: center;
+      white-space: nowrap;
+    }
+    .flow-step-active .flow-label {
+      color: var(--signal-orange);
+    }
+    .flow-sub {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--ink-muted);
+      text-align: center;
+    }
+    .flow-arrow {
+      font-size: 18px;
+      color: var(--ink-muted);
+      padding: 0 6px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Sidebar Navigation ───────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-pill"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--signal-orange); margin-right:6px;"></span>Scribe // DS v2.0</div>
+      <div class="brand-title">Living System</div>
+      <div class="brand-sub">Spatial Intelligence & UI Matrix</div>
+    </div>
+
+    <div class="sidebar-search">
+      <input type="text" id="filterInput" class="search-input" placeholder="Search tokens & components...">
+    </div>
+
+    <ul class="nav-list">
+      <li class="nav-category">Overview</li>
+      <li><a href="#section-overview" class="nav-item active">System Overview</a></li>
+      <li><a href="#section-tokens" class="nav-item">Color &amp; Contrast</a></li>
+      <li><a href="#section-typography" class="nav-item">Typography Ladder</a></li>
+
+      <li class="nav-category">Landing & Presentation</li>
+      <li><a href="#section-landing" class="nav-item">Landing Nav &amp; Hero</a></li>
+      <li><a href="#section-video-demo" class="nav-item">Workflow Video Bento</a></li>
+
+      <li class="nav-category">Atoms & Controls</li>
+      <li><a href="#section-buttons" class="nav-item">Action Buttons</a></li>
+      <li><a href="#section-inputs" class="nav-item">Form Inputs &amp; Controls</a></li>
+
+      <li class="nav-category">Scribe Domain</li>
+      <li><a href="#section-latest-highlight" class="nav-item">Latest Node Radar</a></li>
+      <li><a href="#section-dock" class="nav-item">System Cartridge Dock</a></li>
+      <li><a href="#section-swamp" class="nav-item">Swarm Persona Matrix</a></li>
+      <li><a href="#section-nodes" class="nav-item">Spatial Nodes &amp; Cables</a></li>
+      <li><a href="#section-gigamap" class="nav-item">Oracle GigaMap HUD</a></li>
+      <li><a href="#section-strategist" class="nav-item">Scribe Strategist AI</a></li>
+      <li><a href="#section-chatbot" class="nav-item">Graph Co-Pilot Chatbot</a></li>
+
+      <li class="nav-category">Interactions & States</li>
+      <li><a href="#section-micro" class="nav-item">Micro-Interactions</a></li>
+      <li><a href="#section-states" class="nav-item">7-State Matrix</a></li>
+
+      <li class="nav-category">Edge Cases & Resilience</li>
+      <li><a href="#section-byok" class="nav-item">BYOK &amp; API States (11 Providers)</a></li>
+      <li><a href="#section-fallback" class="nav-item">Offline Recovery &amp; Circuit Breaker</a></li>
+      <li><a href="#section-edgecases" class="nav-item">Overflow &amp; Stress Tests</a></li>
+
+      <li class="nav-category">UX Architecture</li>
+      <li><a href="#section-userflow" class="nav-item">Interactive User Flows</a></li>
+      <li><a href="#section-sitemap" class="nav-item">Information Architecture</a></li>
+
+      <li class="nav-category">Compliance</li>
+      <li><a href="#section-euaiact" class="nav-item">EU AI Act Components (Art. 13/14/50)</a></li>
+
+      <li class="nav-category">Developer Handoff</li>
+      <li><a href="#section-export" class="nav-item">Token Code Export</a></li>
+    </ul>
+  </aside>
+
+  <!-- ── Main Workspace ───────────────────────────────────────── -->
+  <div class="main-wrapper">
+    
+    <!-- Top Toolbar Controls -->
+    <header class="top-toolbar">
+      <div class="toolbar-left">
+        <span style="font-size: 13px; font-weight: 600; color: var(--ink-secondary);">Theme:</span>
+        <div class="control-group">
+          <button class="control-btn active" onclick="setTheme('dark', this)">Dark Tactical</button>
+          <button class="control-btn" onclick="setTheme('light', this)">Light Blueprint</button>
+          <button class="control-btn" onclick="setTheme('oled', this)">OLED Void</button>
+        </div>
+      </div>
+
+      <div class="toolbar-right">
+        <span style="font-size: 13px; font-weight: 600; color: var(--ink-secondary);">State Forcer:</span>
+        <div class="control-group">
+          <button class="control-btn active" onclick="setForcedState('none', this)">Interactive</button>
+          <button class="control-btn" onclick="setForcedState('force-hover', this)">Hover</button>
+          <button class="control-btn" onclick="setForcedState('force-active', this)">Active</button>
+          <button class="control-btn" onclick="setForcedState('force-disabled', this)">Disabled</button>
+          <button class="control-btn" onclick="setForcedState('force-loading', this)">Loading</button>
+          <button class="control-btn" onclick="setForcedState('force-error', this)">Error</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Document Content Container -->
+    <main class="content-container">
+
+      <!-- ── Section 1: Overview ──────────────────────────────── -->
+      <section id="section-overview" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">MANIFESTO</div>
+          <h1 class="section-title">Tactical Noir Design System</h1>
+          <p class="section-desc">
+            Scribe is an industrial-grade spatial intelligence platform. Every visual component is calibrated for high-density cognitive workflows, spatial node-graph topologies, and adversarial simulation lenses.
+          </p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+          <div class="component-card">
+            <h3 style="font-size: 15px; font-weight: 700; color: var(--signal-orange); margin-bottom: 6px;">01. Inky Noir Surfaces</h3>
+            <p style="font-size: 13px; color: var(--ink-secondary);">Deep monochrome surface ladders (#07080a → #0d0d0d → #141414) with 1px hairline borders.</p>
+          </div>
+          <div class="component-card">
+            <h3 style="font-size: 15px; font-weight: 700; color: var(--signal-mint); margin-bottom: 6px;">02. High-Chroma Signals</h3>
+            <p style="font-size: 13px; color: var(--ink-secondary);">Colors are functional telemetry, not decorative filler. Orange = Action, Mint = Verified, Red = Adversarial.</p>
+          </div>
+          <div class="component-card">
+            <h3 style="font-size: 15px; font-weight: 700; color: var(--signal-blue); margin-bottom: 6px;">03. Spatial Physicality</h3>
+            <p style="font-size: 13px; color: var(--ink-secondary);">Node workbenches, cable ports, and floating glass HUD docks calibrated with spring dampening.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 2: Colors & Tokens ───────────────────────── -->
+      <section id="section-tokens" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">FOUNDATIONS</div>
+          <h2 class="section-title">Color Palette & Contrast Hierarchy</h2>
+          <p class="section-desc">Click any color swatch to copy its CSS variable or Hex code directly to your clipboard.</p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Core Signal & Accent Tokens</span>
+            <span class="component-badge">WCAG 2.1 AA / AAA</span>
+          </div>
+          <div class="swatch-grid">
+            <div class="swatch-item" onclick="copyToken('--signal-orange', '#ff4d00')">
+              <div class="swatch-color-box" style="background: #ff4d00; color: #000;">#ff4d00</div>
+              <div class="swatch-name">Scribe Flame</div>
+              <div class="swatch-role">Primary Action / Focus / Dock</div>
+            </div>
+            <div class="swatch-item" onclick="copyToken('--signal-mint', '#32d74b')">
+              <div class="swatch-color-box" style="background: #32d74b; color: #000;">#32d74b</div>
+              <div class="swatch-name">Bauhaus Mint</div>
+              <div class="swatch-role">Verified Flow / Success</div>
+            </div>
+            <div class="swatch-item" onclick="copyToken('--signal-red', '#ff453a')">
+              <div class="swatch-color-box" style="background: #ff453a; color: #fff;">#ff453a</div>
+              <div class="swatch-name">Red Team Crimson</div>
+              <div class="swatch-role">Adversarial Simulation / Error</div>
+            </div>
+            <div class="swatch-item" onclick="copyToken('--signal-blue', '#0a84ff')">
+              <div class="swatch-color-box" style="background: #0a84ff; color: #fff;">#0a84ff</div>
+              <div class="swatch-name">Market Blue</div>
+              <div class="swatch-role">External Datasets / Ingest</div>
+            </div>
+            <div class="swatch-item" onclick="copyToken('--signal-violet', '#bf5af2')">
+              <div class="swatch-color-box" style="background: #bf5af2; color: #fff;">#bf5af2</div>
+              <div class="swatch-name">Deep Violet</div>
+              <div class="swatch-role">Neural Lenses / Ethics</div>
+            </div>
+            <div class="swatch-item" onclick="copyToken('--signal-amber', '#fbbf24')">
+              <div class="swatch-color-box" style="background: #fbbf24; color: #000;">#fbbf24</div>
+              <div class="swatch-name">Oracle Amber</div>
+              <div class="swatch-role">AI Heuristics & Insights</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 3: Typography Ladder ─────────────────────── -->
+      <section id="section-typography" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">FOUNDATIONS</div>
+          <h2 class="section-title">Typography Ladder</h2>
+          <p class="section-desc">Playfair Display for editorial gravitas, DM Sans for high-legibility UI, and JetBrains Mono for system telemetry.</p>
+        </div>
+
+        <div class="component-card">
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px;">
+              <span class="component-badge">DISPLAY // PLAYFAIR 32PX / 900</span>
+              <h1 style="font-family: var(--font-serif); font-size: 32px; font-weight: 900; letter-spacing: -0.03em; color: var(--ink); margin-top: 8px;">
+                Spatial Intelligence for Complex Systems
+              </h1>
+            </div>
+
+            <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px;">
+              <span class="component-badge">HEADING // DM SANS 20PX / 700</span>
+              <h2 style="font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 8px;">
+                Micro Workbench & D3 Dynamic Cable Routing
+              </h2>
+            </div>
+
+            <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px;">
+              <span class="component-badge">BODY // DM SANS 14PX / 400</span>
+              <p style="font-size: 14px; color: var(--ink-secondary); margin-top: 8px;">
+                Unhappy paths, logic gaps, and systemic friction revealed spatially. Run adversarial personas across 30 simulated agents.
+              </p>
+            </div>
+
+            <div>
+              <span class="component-badge">TELEMETRY BADGE // JETBRAINS MONO 9PX / 900</span>
+              <div style="margin-top: 8px;">
+                <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: var(--signal-orange); background: rgba(255, 77, 0, 0.1); border: 1px solid rgba(255, 77, 0, 0.25); padding: 4px 8px; border-radius: 4px;">
+                  SYSTEM // RUNTIME: ARMED
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 4: Action Buttons ────────────────────────── -->
+      <section id="section-buttons" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">ATOMS</div>
+          <h2 class="section-title">Action Buttons & Triggers</h2>
+        </div>
+
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Button Variants & Hierarchy</span>
+            <span class="component-badge">Interactive</span>
+          </div>
+          <div class="preview-stage">
+            <button class="scribe-btn scribe-btn-primary" onclick="triggerToast('Primary CTA Clicked')"> Launch Swarm Mode</button>
+            <button class="scribe-btn scribe-btn-secondary" onclick="triggerToast('Secondary Action Clicked')">Export (.scribe)</button>
+            <button class="scribe-btn scribe-btn-ghost" onclick="triggerToast('Ghost Action Clicked')">Configure Lenses</button>
+            <button class="scribe-btn scribe-btn-danger" onclick="triggerToast('Critical Warning Triggered')">Purge Session</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 4.5A: Workflow Showcase ──────────────────── -->
+            <!-- ── Section 4A: Landing Navigation & Hero ─────────────── -->
+      <section id="section-landing" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">LANDING & PRESENTATION</div>
+          <h2 class="section-title">Landing Navigation &amp; Hero (`LandingNav.tsx`, `LandingHero.tsx`)</h2>
+          <p class="section-desc">Production floating glass navigation header and editorial typography hero header with live interaction states.</p>
+        </div>
+
+        <div class="component-card" style="padding: 36px 24px; background: #07080a; border: 1px solid var(--border); border-radius: var(--radius-lg); position: relative; overflow: hidden;">
+          <!-- Ambient gradient flare -->
+          <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 600px; height: 180px; background: radial-gradient(ellipse at top, rgba(255, 77, 0, 0.15) 0%, transparent 70%); pointer-events: none;"></div>
+
+          <!-- 1. Floating Landing Header -->
+          <div style="max-width: 960px; margin: 0 auto 48px auto; padding: 10px 16px; background: #0d0d0d; border: 1px solid #242728; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 2;">
+            <!-- Brand Logo -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color: #ff4d00;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <span style="font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">Scribe</span>
+            </div>
+
+            <!-- Nav Links -->
+            <nav style="display: flex; align-items: center; gap: 20px;">
+              <a href="#demo-guide" style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #cdcdcd; text-decoration: none;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #ff4d00; display: inline-block;"></span>
+                Guide
+              </a>
+              <a href="#features" style="font-size: 13px; font-weight: 500; color: #8c8c8c; text-decoration: none;">Features</a>
+              <a href="#privacy" style="font-size: 13px; font-weight: 500; color: #8c8c8c; text-decoration: none;">Security</a>
+              <a href="#pricing" style="font-size: 13px; font-weight: 500; color: #8c8c8c; text-decoration: none;">Pricing</a>
+              <a href="#faq" style="font-size: 13px; font-weight: 500; color: #8c8c8c; text-decoration: none;">FAQ</a>
+            </nav>
+
+            <!-- CTA Button -->
+            <button class="scribe-btn" style="background: #ffffff; color: #000000; font-size: 13px; font-weight: 700; padding: 7px 16px; border-radius: 6px; border: none; display: flex; align-items: center; gap: 6px; cursor: pointer;" onclick="triggerToast('Try Beta Clicked')">
+              <span>Try Beta</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+
+          <!-- 2. Landing Hero Headline & CTA -->
+          <div style="max-width: 780px; margin: 0 auto; text-align: center; position: relative; z-index: 2;">
+            <h1 style="font-family: var(--font-serif); font-size: clamp(32px, 5vw, 54px); font-weight: 500; color: #ffffff; line-height: 1.08; letter-spacing: -0.03em; margin-bottom: 20px;">
+              Map complex ideas.<br>
+              <span style="font-style: italic; opacity: 0.7;">Build better strategies.</span>
+            </h1>
+            <p style="font-family: var(--font-sans); font-size: 16px; color: rgba(255,255,255,0.7); max-width: 580px; margin: 0 auto 32px auto; line-height: 1.6;">
+              A visual workspace to connect your thoughts, test your ideas, and see the big picture. Escape the limits of traditional documents.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 16px;">
+              <button class="scribe-btn" style="background: #ffffff; color: #000000; font-size: 15px; font-weight: 700; padding: 14px 32px; border-radius: 9999px; border: none; display: flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 10px 30px rgba(255,255,255,0.15);" onclick="triggerToast('Opening Scribe Workspace...')">
+                <span>Try Beta</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-video-demo" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">ONBOARDING & WORKFLOW</div>
+          <h2 class="section-title">Video Demonstration Showcase (`DemoVideoBento.tsx`)</h2>
+          <p class="section-desc">Paired 2-column widescreen uncropped video cards with continuous looping playback for effortless product onboarding.</p>
+        </div>
+
+        <div class="component-card">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+            <!-- Card 01 Mock -->
+            <div style="background: #0c0d10; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-md);">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); background: #08090b;">
+                <div style="display: flex; gap: 6px;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2);"></span>
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.1);"></span>
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.1);"></span>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: #f97316;">01 / Set API Key</span>
+              </div>
+              <div style="aspect-ratio: 16/9; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                <video src="../../public/demos/01-api-key.mp4" poster="../../public/demos/01-api-key-poster.jpg" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
+              </div>
+              <div style="padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; color: var(--ink-secondary);">Stored locally in your browser</span>
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #f97316;"></span>
+              </div>
+            </div>
+
+            <!-- Card 02 Mock -->
+            <div style="background: #0c0d10; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-md);">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); background: #08090b;">
+                <div style="display: flex; gap: 6px;">
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2);"></span>
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.1);"></span>
+                  <span style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.1);"></span>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: #10b981;">02 / Upload Files</span>
+              </div>
+              <div style="aspect-ratio: 16/9; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                <video src="../../public/demos/02-upload-files.mp4" poster="../../public/demos/02-upload-files-poster.jpg" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
+              </div>
+              <div style="padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; color: var(--ink-secondary);">Markdown, PDFs, and raw text</span>
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 4.5B: Latest Node Radar Highlight ────────── -->
+      <section id="section-latest-highlight" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">SPATIAL ATTENTION & FOCUS</div>
+          <h2 class="section-title">Latest Node Radar Highlight & Beacon</h2>
+          <p class="section-desc">Dynamic attention-grabbing pulse halo, SVG `#latest-glow` filters, and radiant `● NEW` badges for newly synthesized graph nodes.</p>
+        </div>
+
+        <div class="component-card">
+          <div class="preview-stage" style="gap: 32px;">
+            <!-- Active Latest Node Preview -->
+            <div style="position: relative; padding: 16px 20px; background: #141414; border: 2.5px solid #0a84ff; border-radius: 12px; min-width: 240px; box-shadow: var(--shadow-latest-glow);">
+              <div style="position: absolute; top: -10px; right: -10px; background: #0a84ff; color: #fff; font-size: 9px; font-weight: 900; font-family: var(--font-mono); padding: 2px 8px; border-radius: 9999px; display: flex; align-items: center; gap: 4px; box-shadow: 0 0 10px rgba(10,132,255,0.8);">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #34d399;"></span>
+                NEW
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 9px; font-weight: 900; color: #0a84ff; letter-spacing: 0.12em; font-family: var(--font-mono);">INSIGHT</span>
+                <span style="font-size: 9px; color: var(--ink-muted); font-family: var(--font-mono);">SYNCED</span>
+              </div>
+              <div style="font-size: 13px; font-weight: 700; color: #fff; line-height: 1.3;">
+                Autonomous Agent Conflict Protocol
+              </div>
+            </div>
+
+            <!-- Standard Cooled Node for Comparison -->
+            <div style="position: relative; padding: 16px 20px; background: #141414; border: 1px solid var(--border); border-radius: 12px; min-width: 240px; opacity: 0.75;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 9px; font-weight: 900; color: var(--ink-muted); letter-spacing: 0.12em; font-family: var(--font-mono);">ARCHIVE</span>
+                <span style="font-size: 9px; color: var(--ink-muted); font-family: var(--font-mono);">COOLED</span>
+              </div>
+              <div style="font-size: 13px; font-weight: 600; color: var(--ink-secondary); line-height: 1.3;">
+                Foundational Market Opportunity
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 5: Cartridge Dock ────────────────────────── -->
+      <section id="section-dock" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">SCRIBE DOMAIN</div>
+          <h2 class="section-title">System Cartridge Dock (`CartridgeDock.tsx`)</h2>
+          <p class="section-desc">The primary instrument dock for adding lenses, connecting datasets, and managing workspace snapshots.</p>
+        </div>
+
+        <div class="component-card">
+          <div class="dock-preview-container">
+            <div class="live-dock">
+              <div class="dock-brand-zone">
+                <div style="display: flex; flex-direction: column;">
+                  <span style="font-family: var(--font-mono); font-size: 8px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.4;">System</span>
+                  <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: var(--signal-orange);">Dock</span>
+                </div>
+                <button class="scribe-btn scribe-btn-ghost" style="padding: 4px;" title="Export Workspace" onclick="triggerToast('Exporting Scribe Workspace...')">⤓</button>
+              </div>
+
+              <div class="dock-cartridge active" onclick="toggleCartridge(this, 'Oracle Lens')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color: var(--signal-orange);"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                <span>Oracle Lens</span>
+              </div>
+              <div class="dock-cartridge" onclick="toggleCartridge(this, 'Swamp Lens')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--signal-orange);"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg>
+                <span>Swamp Lens</span>
+              </div>
+              <div class="dock-cartridge" onclick="toggleCartridge(this, 'Strategist AI')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--signal-orange);"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/></svg>
+                <span>Strategist</span>
+              </div>
+              <div class="dock-cartridge" onclick="toggleCartridge(this, 'Local Store')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--signal-blue);"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                <span>Local Store</span>
+              </div>
+              <div class="dock-cartridge" onclick="toggleCartridge(this, 'External Injector')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--signal-blue);"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v7c0 1.66 4 3 9 3"/><path d="M16 19l3-3-3-3"/><path d="M19 16H11"/></svg>
+                <span>External Injector</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 6: Swarm Persona Matrix ──────────────────── -->
+      <section id="section-swamp" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">SCRIBE DOMAIN & EU COMPLIANCE</div>
+          <h2 class="section-title">Swarm Persona Matrix (`SwampSelector.tsx`)</h2>
+          <p class="section-desc">Adversarial simulation packages for stress-testing product ideas, with statutory transparency (EU Art. 50) and cognitive step-gate verification ([SOT-COMP-2026]).</p>
+        </div>
+
+        <div class="component-card">
+          <!-- Statutory Notice Banner -->
+          <div style="margin-bottom: 20px; padding: 12px 16px; background: rgba(255, 77, 0, 0.08); border: 1px solid rgba(255, 77, 0, 0.25); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 900; color: var(--signal-orange); letter-spacing: 0.15em;">EU ART. 50 // SYNTHETIC PERSONA TRANSPARENCY</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 11px; color: var(--ink-secondary);">Step-Gate Mode:</span>
+              <button id="demoStepGateBtn" class="scribe-btn scribe-btn-primary" style="padding: 4px 10px; font-size: 10px;" onclick="toggleDemoStepGate(this)">ENABLED (Verified)</button>
+            </div>
+          </div>
+
+          <div class="swamp-grid">
+            <div class="swamp-card selected" onclick="selectSwampPackage(this)">
+              <div class="swamp-header">
+                <div class="swamp-icon-badge" style="background: rgba(255, 69, 58, 0.15); color: var(--signal-red);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+                <div style="display: flex; gap: 4px;">
+                  <span class="component-badge" style="color: var(--signal-red);">10 AI PERSONAS</span>
+                  <span class="component-badge" style="color: var(--signal-orange);">ACTIVE</span>
+                </div>
+              </div>
+              <div class="swamp-title">The Red Team</div>
+              <div class="swamp-desc">Critical analysis, edge-case vulnerability discovery, and systemic friction resistance.</div>
+            </div>
+
+            <div class="swamp-card" onclick="selectSwampPackage(this)">
+              <div class="swamp-header">
+                <div class="swamp-icon-badge" style="background: rgba(50, 215, 75, 0.15); color: var(--signal-mint);"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6.1 4.5 2.3 7.3-6.2-4.6-6.2 4.6 2.3-7.3-6.1-4.5h7.6z"/></svg></div>
+                <span class="component-badge" style="color: var(--signal-mint);">8 AI PERSONAS</span>
+              </div>
+              <div class="swamp-title">The Bauhaus Council</div>
+              <div class="swamp-desc">Utility, essentialism, and industrial ergonomics without decoration waste.</div>
+            </div>
+
+            <div class="swamp-card" onclick="selectSwampPackage(this)">
+              <div class="swamp-header">
+                <div class="swamp-icon-badge" style="background: rgba(10, 132, 255, 0.15); color: var(--signal-blue);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+                <span class="component-badge" style="color: var(--signal-blue);">6 AI PERSONAS</span>
+              </div>
+              <div class="swamp-title">The Market Movers</div>
+              <div class="swamp-desc">Business economics, distribution flywheels, and monetization sovereignty.</div>
+            </div>
+
+            <div class="swamp-card" onclick="selectSwampPackage(this)">
+              <div class="swamp-header">
+                <div class="swamp-icon-badge" style="background: rgba(191, 90, 242, 0.15); color: var(--signal-violet);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></div>
+                <span class="component-badge" style="color: var(--signal-violet);">6 AI PERSONAS</span>
+              </div>
+              <div class="swamp-title">The Deep Thinkers</div>
+              <div class="swamp-desc">Ethics, epistemic humility, and long-term societal resilience models.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 7: Spatial Nodes & Cables ────────────────── -->
+      <section id="section-nodes" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">SPATIAL TOPOLOGY</div>
+          <h2 class="section-title">Spatial Workbenches & Live Cables</h2>
+          <p class="section-desc">Interactive demonstration of node blocks and SVG dynamic cable routing with animated pulse telemetry.</p>
+        </div>
+
+        <div class="component-card">
+          <div class="node-canvas-mock">
+            <svg class="cable-svg">
+              <path class="cable-path" d="M 280,110 C 440,110 520,110 680,110" />
+            </svg>
+
+            <div class="canvas-node" style="left: 40px;">
+              <div class="node-header">
+                <span style="display: flex; align-items: center; gap: 6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                  Ingest Source
+                </span>
+                <div class="node-port" title="Output Port"></div>
+              </div>
+              <p style="font-size: 11px; color: var(--ink-secondary);">Vector Cluster: UserSessions_v2</p>
+              <div style="margin-top: 10px; font-family: var(--font-mono); font-size: 9px; color: var(--signal-mint);">● 1,420 RECORDS SYNCED</div>
+            </div>
+
+            <div class="canvas-node" style="right: 40px;">
+              <div class="node-header">
+                <div class="node-port" title="Input Port"></div>
+                <span style="display: flex; align-items: center; gap: 6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color: var(--signal-orange);"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  Oracle Engine
+                </span>
+              </div>
+              <p style="font-size: 11px; color: var(--ink-secondary);">Synthesis: High Friction Detected</p>
+              <div style="margin-top: 10px; font-family: var(--font-mono); font-size: 9px; color: var(--signal-orange);">● RUNNING INFERENCE</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 7B: Oracle GigaMap Telemetry HUD ──────────── -->
+      <section id="section-gigamap" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">SPATIAL TELEMETRY</div>
+          <h2 class="section-title">Oracle GigaMap Telemetry HUD (`OracleGigaMap.tsx`)</h2>
+          <p class="section-desc">Tactical floating HUD overlays, camera controls, coordinate readouts, and spatial resonance indexes.</p>
+        </div>
+
+        <div class="component-card">
+          <div style="position: relative; height: 320px; background: #060709; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; display: flex; align-items: center; justify-content: center;">
+            <!-- Grid background simulation -->
+            <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px); background-size: 24px 24px; opacity: 0.6;"></div>
+
+            <!-- Center Canvas Nodes simulation -->
+            <div style="position: absolute; display: flex; gap: 80px; align-items: center;">
+              <div style="padding: 10px 14px; background: #141414; border: 1px solid rgba(255,255,255,0.12); border-left: 3px solid #ff4d00; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+                <div style="font-family: var(--font-mono); font-size: 8px; font-weight: 900; color: #ff4d00; text-transform: uppercase;">ROOT CONCEPT</div>
+                <div style="font-size: 12px; font-weight: 700; color: #fff; margin-top: 2px;">Market Liquidity Protocol</div>
+              </div>
+              <div style="padding: 10px 14px; background: #141414; border: 1px solid rgba(255,255,255,0.12); border-left: 3px solid #32d74b; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+                <div style="font-family: var(--font-mono); font-size: 8px; font-weight: 900; color: #32d74b; text-transform: uppercase;">VERIFIED OUTCOME</div>
+                <div style="font-size: 12px; font-weight: 700; color: #fff; margin-top: 2px;">Zero-Knowledge Settlement</div>
+              </div>
+            </div>
+
+            <!-- Top-Left Telemetry Pill -->
+            <div style="position: absolute; top: 16px; left: 16px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(18, 20, 23, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #32d74b;"></span>
+              <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 800; color: #f2f2f7; letter-spacing: 0.05em;">1,248 NODES INDEXED</span>
+            </div>
+
+            <!-- Top-Right Mode Selector & Sync Badge -->
+            <div style="position: absolute; top: 16px; right: 16px; display: flex; align-items: center; gap: 8px;">
+              <div style="display: flex; padding: 2px; background: rgba(18, 20, 23, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                <button class="control-btn active" style="font-size: 10px; padding: 4px 10px; font-family: var(--font-mono);">2D MAP</button>
+                <button class="control-btn" style="font-size: 10px; padding: 4px 10px; font-family: var(--font-mono);">3D ORBIT</button>
+              </div>
+              <div style="padding: 6px 10px; background: rgba(18, 20, 23, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-family: var(--font-mono); font-size: 10px; color: var(--ink-secondary);">
+                FPS: 60 • 12ms
+              </div>
+            </div>
+
+            <!-- Bottom-Right Zoom Controls -->
+            <div style="position: absolute; bottom: 16px; right: 16px; display: flex; align-items: center; gap: 4px; padding: 4px; background: rgba(18, 20, 23, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;">
+              <button class="control-btn" style="padding: 6px 10px; font-weight: 700; font-size: 12px;" title="Zoom In">+</button>
+              <button class="control-btn" style="padding: 6px 10px; font-weight: 700; font-size: 12px;" title="Zoom Out">-</button>
+              <button class="control-btn" style="padding: 6px 10px; font-size: 10px; font-family: var(--font-mono);" title="Reset View">FIT</button>
+              <button class="control-btn" style="padding: 6px 10px; font-size: 10px; font-family: var(--font-mono);" title="100% Zoom">100%</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ── Section 8: Scribe Strategist AI ───────────────────── -->
+      <section id="section-strategist" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">AI INTERACTION & VERIFICATION</div>
+          <h2 class="section-title">Scribe Strategist AI (`ScribeStrategist.tsx`)</h2>
+          <p class="section-desc">Heuristic recommendation feed with expandable empirical rationale ([SOT-D3AUX3]) and 2-step verified canvas mutation ([SOT-COMP-3012]).</p>
+        </div>
+
+        <div class="component-card">
+          <div style="max-width: 480px; margin: 0 auto; background: rgba(10, 10, 12, 0.95); border: 1px solid var(--border-strong); border-radius: var(--radius-xl); padding: 20px; box-shadow: var(--shadow-lg);">
+            
+            <div style="display: flex; items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 16px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/></svg>
+                <div>
+                  <div style="font-size: 13px; font-weight: 700; color: #fff;">Strategic Recommendation</div>
+                  <div style="font-size: 10px; font-family: var(--font-mono); color: var(--signal-mint);">EU Art. 14 // Human-in-the-Loop</div>
+                </div>
+              </div>
+              <span class="component-badge" style="color: var(--signal-orange);">94% CONFIDENCE</span>
+            </div>
+
+            <p style="font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.5; margin-bottom: 14px;">
+              Cluster 4 exhibits high adversarial resistance. Recommend splitting into two decoupled micro-workbenches to isolate failure modes.
+            </p>
+
+            <!-- Expandable Rationale Box -->
+            <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; margin-bottom: 14px;">
+              <div style="font-size: 11px; font-weight: 700; color: #fbbf24; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Empirical Rationale Ledger ([SOT-COMP-2026])</span>
+              </div>
+              <p style="font-size: 11px; color: var(--ink-secondary); line-height: 1.4;">
+                Evaluated against Red Team personas. 4/5 models flagged single-point-of-failure in current node wiring.
+              </p>
+            </div>
+
+            <!-- 2-Step Verified Apply Action -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <button id="demoApplyBtn" class="scribe-btn scribe-btn-secondary" style="font-size: 11px; padding: 6px 14px;" onclick="handleDemoApply(this)">
+                Apply Recommendation
+              </button>
+              <span style="font-size: 10px; font-family: var(--font-mono); color: var(--ink-muted);">Requires human confirmation</span>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 8B: Graph Co-Pilot Chatbot ────────────────── -->
+      <section id="section-chatbot" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">COGNITIVE CO-PILOT</div>
+          <h2 class="section-title">Graph Co-Pilot Chatbot (`GraphChatbot.tsx`)</h2>
+          <p class="section-desc">Conversational context co-pilot with one-click "Make Graph" synthesis that turns chat insights into spatial node structures.</p>
+        </div>
+
+        <div class="component-card">
+          <div style="max-width: 540px; margin: 0 auto; background: #0e1012; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg);">
+            <!-- Chatbot Header -->
+            <div style="padding: 14px 18px; background: #14171a; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--signal-orange);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span style="font-size: 13px; font-weight: 700; color: #fff;">Graph Co-Pilot</span>
+                <span class="component-badge" style="background: rgba(50,215,75,0.15); color: #32d74b;">READY</span>
+              </div>
+              <span style="font-family: var(--font-mono); font-size: 10px; color: var(--ink-muted);">AI CO-PILOT v2</span>
+            </div>
+
+            <!-- Quick Prompts Pill Bar -->
+            <div style="padding: 10px 14px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; gap: 8px; overflow-x: auto; white-space: nowrap;">
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 9999px; font-size: 11px; color: var(--ink-secondary); cursor: pointer;">
+                Explore Blind Spots &amp; Risks
+              </span>
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 9999px; font-size: 11px; color: var(--ink-secondary); cursor: pointer;">
+                Brainstorm Next Action Steps
+              </span>
+            </div>
+
+            <!-- Chat Thread Messages -->
+            <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+              <!-- User Message -->
+              <div style="align-self: flex-end; max-width: 85%; padding: 10px 14px; background: rgba(255,77,0,0.15); border: 1px solid rgba(255,77,0,0.3); border-radius: 12px 12px 2px 12px; font-size: 13px; color: #fff;">
+                What regulatory blindspots should we prepare for under Article 14 of the EU AI Act?
+              </div>
+
+              <!-- Assistant Message with Make Graph CTA -->
+              <div style="align-self: flex-start; max-width: 90%; padding: 12px 14px; background: #141414; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px 12px 12px 2px;">
+                <div style="font-size: 13px; color: var(--ink); line-height: 1.5; margin-bottom: 12px;">
+                  Under <strong>Article 14 (Human Oversight)</strong>, you must ensure operators can override autonomous loops. I've identified 3 high-leverage nodes to add to your safety architecture.
+                </div>
+
+                <!-- Signature "Make Graph" CTA Button -->
+                <button class="scribe-btn scribe-btn-primary" style="font-size: 11px; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;" onclick="triggerToast('Synthesizing chat into 3 new graph nodes...')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  <span>Make Graph</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Input Box -->
+            <div style="padding: 12px; background: #101214; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 8px;">
+              <input type="text" placeholder="Ask Graph Co-Pilot or request expansion..." value="" style="flex: 1; padding: 8px 12px; background: #16181b; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 12px; outline: none;">
+              <button class="scribe-btn scribe-btn-secondary" style="padding: 8px 14px; font-size: 12px;">Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ── Section 8: Edge Cases & Stress Bench ─────────────── -->
+      <section id="section-edgecases" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">STRESS TEST BENCH</div>
+          <h2 class="section-title">Edge Cases & Content Truncation</h2>
+          <p class="section-desc">Verify how cards and inputs behave with 150+ character strings, single characters, and empty states.</p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Extreme String Overflow Test (150+ Chars)</span>
+            <span class="component-badge">Strict Truncation</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); max-width: 420px;">
+              <div style="font-size: 11px; color: var(--ink-muted); margin-bottom: 4px;">Node Label (Truncated with Ellipsis):</div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="EnterpriseArchitecture_Strategy_Migration_Specification_Production_Final_Approved_v2_2026.scribe">
+                EnterpriseArchitecture_Strategy_Migration_Specification_Production_Final_Approved_v2_2026.scribe
+              </div>
+            </div>
+
+            <div style="padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); max-width: 420px;">
+              <div style="font-size: 11px; color: var(--ink-muted); margin-bottom: 4px;">Multi-line Description (2-Line Clamp):</div>
+              <div style="font-size: 13px; color: var(--ink-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                This spatial simulation models extreme adversarial friction across sixty concurrent personas to detect systemic failure points before production deployment.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 9: Token Export ──────────────────────────── -->
+      <section id="section-export" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">DEVELOPER HANDOFF</div>
+          <h2 class="section-title">Token Code Export</h2>
+          <p class="section-desc">Production JSON tokens and CSS custom properties ready for direct integration.</p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">tokens.json Export</span>
+            <button class="scribe-btn scribe-btn-secondary" style="padding: 4px 12px; font-size: 11px;" onclick="copyCodeSnippet()">Copy JSON Tokens</button>
+          </div>
+          <pre id="codeExportBlock" style="background: #07080a; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; font-family: var(--font-mono); font-size: 12px; color: #a1a1aa; overflow-x: auto; max-height: 240px;">
+{
+  "name": "Scribe Design System Tokens",
+  "version": "2.0.0",
+  "color": {
+    "canvas": { "base": "#07080a", "surface": "#0d0d0d", "card": "#141414" },
+    "signals": {
+      "orange": "#ff4d00",
+      "mint": "#32d74b",
+      "red": "#ff453a",
+      "blue": "#0a84ff",
+      "violet": "#bf5af2"
+    }
+  }
+}
+          </pre>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- ═══ NEW PORTFOLIO SECTIONS ══════════════════════════════════ -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+
+      <!-- ── Section 10: Micro-Interactions Catalogue ────────────────── -->
+      <section id="section-micro" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">MICRO-INTERACTIONS</div>
+          <h2 class="section-title">Micro-Interaction Catalogue</h2>
+          <p class="section-desc">Every tactile detail that makes Scribe feel alive. Hover each element to trigger its animation contract.</p>
+        </div>
+
+        <!-- Card: Button Spring -->
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Spring Lift & Glow on Hover</span>
+            <span class="component-badge">cubic-bezier(0.2, 0.8, 0.2, 1)</span>
+          </div>
+          <div class="preview-stage" style="gap: 24px; flex-wrap: wrap;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <button style="background: var(--signal-orange); color: #000; font-weight: 700; font-size: 13px; padding: 10px 22px; border: none; border-radius: 12px; cursor: pointer; transition: all 0.18s cubic-bezier(0.2,0.8,0.2,1); box-shadow: 0 4px 14px rgba(255,77,0,0.25);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(255,77,0,0.45)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(255,77,0,0.25)'"> Synthesize</button>
+              <span style="font-size: 10px; color: var(--ink-muted); font-family: var(--font-mono);">translateY(-3px) + shadow bloom</span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; transition: all 0.15s; box-shadow: none;" onmouseover="this.style.background='rgba(255,77,0,0.1)';this.style.borderColor='var(--signal-orange)';this.style.transform='scale(1.08)'" onmouseout="this.style.background='';this.style.borderColor='';this.style.transform=''"></div>
+              <span style="font-size: 10px; color: var(--ink-muted); font-family: var(--font-mono);">scale(1.08) + accent tint</span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <div style="padding: 10px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; font-size: 12px; font-weight: 600; color: var(--ink-secondary); cursor: pointer; transition: all 0.18s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.background='var(--bg-card-hover)';this.style.borderColor='var(--border-strong)';this.style.color='var(--ink)';this.style.paddingLeft='20px'" onmouseout="this.style.background='';this.style.borderColor='';this.style.color='var(--ink-secondary)';this.style.paddingLeft='16px'">↳ Expand Cluster</div>
+              <span style="font-size: 10px; color: var(--ink-muted); font-family: var(--font-mono);">padding-left slide + text lift</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Pulse Animations -->
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Live Pulse & Beacon Animations</span>
+            <span class="component-badge">CSS @keyframes</span>
+          </div>
+          <div class="preview-stage" style="gap: 40px; flex-wrap: wrap;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="position: relative; width: 20px; height: 20px;">
+                <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--signal-mint); box-shadow: 0 0 10px rgba(50,215,75,0.6);"></div>
+                <div style="position: absolute; inset: 0; border-radius: 50%; background: rgba(50,215,75,0.4); animation: pingPulse 1.5s ease-out infinite;"></div>
+              </div>
+              <span style="font-size: 10px; color: var(--ink-muted); font-family: var(--font-mono);">SYNC BEACON</span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="width: 16px; height: 16px; border: 2.5px solid var(--signal-orange); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+              <span style="font-size: 10px; color: var(--ink-muted); font-family: var(--font-mono);">LOADING SPINNER</span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="padding: 6px 14px; background: rgba(255,77,0,0.1); border: 1px solid rgba(255,77,0,0.3); border-radius: 9999px; font-family: var(--font-mono); font-size: 10px; font-weight: 900; color: var(--signal-orange); letter-spacing: 0.15em; animation: statusBlink 2s ease-in-out infinite;">● SYNTHESIZING</div>
+              <span style="font-size: 10px; color: var(--ink-muted); font-family: var(--font-mono);">OPACITY PULSE</span>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="width: 120px; height: 8px; border-radius: 4px; background: var(--bg-card); overflow: hidden; border: 1px solid var(--border);">
+                <div style="height: 100%; width: 60%; background: linear-gradient(90deg, var(--signal-orange), rgba(255,77,0,0.4)); border-radius: 4px; animation: progressPulse 1.5s ease-in-out infinite;"></div>
+              </div>
+              <span style="font-size: 10px; color: var(--ink-muted); font-family: var(--font-mono);">PROGRESS BAR</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Input Focus Ring -->
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Input Focus Ring & Validation Feedback</span>
+            <span class="component-badge">WCAG 2.1 AA Compliant</span>
+          </div>
+          <div class="preview-stage" style="flex-direction: column; align-items: flex-start; gap: 16px;">
+            <div style="display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 340px;">
+              <label style="font-size: 10px; font-family: var(--font-mono); color: var(--ink-muted); letter-spacing: 0.1em; text-transform: uppercase;">Gemini API Key</label>
+              <input type="text" placeholder="AIzaSy..." style="width: 100%; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; color: var(--ink); font-size: 13px; outline: none; font-family: var(--font-mono); transition: all 0.18s;" onfocus="this.style.borderColor='var(--signal-orange)';this.style.boxShadow='0 0 0 3px rgba(255,77,0,0.2)'" onblur="this.style.borderColor='';this.style.boxShadow=''">
+              <span style="font-size: 11px; color: var(--ink-muted);">Focus to see the orange accessibility ring</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 340px;">
+              <label style="font-size: 10px; font-family: var(--font-mono); color: var(--signal-red); letter-spacing: 0.1em; text-transform: uppercase;">API Key — Error State</label>
+              <input type="text" value="INVALID_KEY_TRUNCATED" style="width: 100%; padding: 10px 14px; background: rgba(255,69,58,0.08); border: 1px solid rgba(255,69,58,0.5); border-radius: 10px; color: var(--ink); font-size: 13px; outline: none; font-family: var(--font-mono);">
+              <span style="font-size: 11px; color: var(--signal-red); display: flex; align-items: center; gap: 4px;"> HTTP 403: Key verification failed</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 11: Complete Component State Matrix ─────────────── -->
+      <section id="section-states" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">INTERACTION STATES</div>
+          <h2 class="section-title">7-State Component Matrix</h2>
+          <p class="section-desc">Every interactive component in Scribe implements all 7 universal states. Use the State Forcer in the toolbar to force any state globally.</p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Button: All 7 States Side-by-Side</span>
+            <span class="component-badge">Interactive</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <th style="text-align: left; padding: 10px 12px; color: var(--ink-muted); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;">State</th>
+                  <th style="text-align: left; padding: 10px 12px; color: var(--ink-muted); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;">Preview</th>
+                  <th style="text-align: left; padding: 10px 12px; color: var(--ink-muted); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;">Token</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid var(--border-subtle);">
+                  <td style="padding: 12px; font-weight: 600; color: var(--ink);">1. Idle</td>
+                  <td style="padding: 12px;"><button style="background: var(--bg-card); border: 1px solid var(--border-strong); color: var(--ink); padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;">Synthesize Map</button></td>
+                  <td style="padding: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted);">bg-card / border / ink</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border-subtle);">
+                  <td style="padding: 12px; font-weight: 600; color: var(--ink);">2. Hover</td>
+                  <td style="padding: 12px;"><button style="background: var(--bg-card-hover); border: 1px solid rgba(255,255,255,0.25); color: var(--ink); padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 600; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">Synthesize Map</button></td>
+                  <td style="padding: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted);">bg-card-hover / border-strong / translateY(-1px)</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border-subtle);">
+                  <td style="padding: 12px; font-weight: 600; color: var(--ink);">3. Pressed</td>
+                  <td style="padding: 12px;"><button style="background: #0d0d0d; border: 1px solid var(--border); color: var(--ink); padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 600; transform: scale(0.97);">Synthesize Map</button></td>
+                  <td style="padding: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted);">bg-deeper / scale(0.97)</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border-subtle);">
+                  <td style="padding: 12px; font-weight: 600; color: var(--ink);">4. Focus</td>
+                  <td style="padding: 12px;"><button style="background: var(--bg-card); border: 1px solid var(--signal-orange); color: var(--ink); padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 600; outline: none; box-shadow: 0 0 0 3px rgba(255,77,0,0.3);">Synthesize Map</button></td>
+                  <td style="padding: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted);">ring-orange / box-shadow glow</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border-subtle);">
+                  <td style="padding: 12px; font-weight: 600; color: var(--ink);">5. Disabled</td>
+                  <td style="padding: 12px;"><button style="background: var(--bg-card); border: 1px solid var(--border); color: var(--ink); padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 600; opacity: 0.35; cursor: not-allowed; pointer-events: none;">Synthesize Map</button></td>
+                  <td style="padding: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted);">opacity-35 / pointer-events: none</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border-subtle);">
+                  <td style="padding: 12px; font-weight: 600; color: var(--ink);">6. Loading</td>
+                  <td style="padding: 12px;"><button style="background: var(--bg-card); border: 1px solid var(--border); color: transparent; padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: wait; display: flex; align-items: center; gap: 8px;"><span style="width: 14px; height: 14px; border: 2px solid var(--signal-orange); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></span><span style="color: var(--ink-muted);">Building…</span></button></td>
+                  <td style="padding: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted);">spinner + color-transparent label</td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px; font-weight: 600; color: var(--signal-red);">7. Error</td>
+                  <td style="padding: 12px;"><button style="background: rgba(255,69,58,0.1); border: 1px solid rgba(255,69,58,0.45); color: var(--signal-red); padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 600;" onclick="triggerToast('Error state: API key validation failed')"> API Failure</button></td>
+                  <td style="padding: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted);">bg-red/10 / border-red / text-red</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Badge / Pill States -->
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Status Badges & System Pills</span>
+            <span class="component-badge">All States</span>
+          </div>
+          <div class="preview-stage" style="gap: 12px; flex-wrap: wrap; justify-content: flex-start;">
+            <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 9999px; border: 1px solid rgba(50,215,75,0.4); background: rgba(50,215,75,0.12); color: var(--signal-mint); letter-spacing: 0.12em;">● ONLINE</span>
+            <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 9999px; border: 1px solid rgba(255,77,0,0.4); background: rgba(255,77,0,0.12); color: var(--signal-orange); letter-spacing: 0.12em;">● SYNTHESIZING</span>
+            <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 9999px; border: 1px solid rgba(255,69,58,0.4); background: rgba(255,69,58,0.12); color: var(--signal-red); letter-spacing: 0.12em;"> API FAILED</span>
+            <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 9999px; border: 1px solid rgba(251,191,36,0.4); background: rgba(251,191,36,0.12); color: var(--signal-amber); letter-spacing: 0.12em;">● OFFLINE MODE</span>
+            <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 9999px; border: 1px solid rgba(10,132,255,0.4); background: rgba(10,132,255,0.12); color: var(--signal-blue); letter-spacing: 0.12em;"> AI RUNNING</span>
+            <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 9999px; border: 1px solid var(--border); background: transparent; color: var(--ink-muted); letter-spacing: 0.12em;">COOLED</span>
+            <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; padding: 3px 10px; border-radius: 9999px; border: 1px solid rgba(191,90,242,0.4); background: rgba(191,90,242,0.12); color: var(--signal-violet); letter-spacing: 0.12em;">Art. 14 VERIFIED</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 12: BYOK Modal & API Diagnostics ─────────────── -->
+      <section id="section-byok" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">API MANAGEMENT & EDGE CASES</div>
+          <h2 class="section-title">BYOK Settings Modal & Live Connection Tester</h2>
+          <p class="section-desc">Zero-custody Bring Your Own Key architecture with real-time ping verification. Keys are stored exclusively in browser <code style="font-family: var(--font-mono); font-size: 12px;">localStorage</code> — no backend, no telemetry.</p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Connection Tester — All API States</span>
+            <span class="component-badge">Live Interactive</span>
+          </div>
+
+          <!-- Mock BYOK Modal -->
+          <div style="max-width: 520px; margin: 0 auto; background: var(--bg-app, #0a0b0d); border: 1px solid var(--border-strong); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-lg);">
+            <!-- Modal Header -->
+            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border); background: var(--bg-surface, #0d0d0d); display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; letter-spacing: 0.18em; color: var(--signal-orange); text-transform: uppercase; margin-bottom: 3px;"> BYOK // Zero-Custody</div>
+                <div style="font-size: 15px; font-weight: 700; color: var(--ink);">API Key Configuration</div>
+              </div>
+              <span style="font-family: var(--font-mono); font-size: 9px; padding: 3px 8px; border-radius: 9999px; border: 1px solid rgba(50,215,75,0.35); background: rgba(50,215,75,0.1); color: var(--signal-mint);">LOCAL STORAGE ONLY</span>
+            </div>
+            <!-- Provider Selector -->
+            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-subtle);">
+              <div style="font-size: 10px; font-family: var(--font-mono); color: var(--ink-muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px;">Select AI Provider</div>
+              <div style="display: flex; gap: 8px;">
+                <div id="provGemini" style="flex: 1; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--signal-orange); background: rgba(255,77,0,0.1); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--ink);" onclick="selectProvider('gemini')">Google Gemini (Cloud)</div>
+                <div id="provLocal" style="flex: 1; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--ink-muted);" onclick="selectProvider('local')">Ollama (Local AI)</div>
+              </div>
+            </div>
+            <!-- Key Input -->
+            <div style="padding: 20px 24px 0;">
+              <div style="font-size: 10px; font-family: var(--font-mono); color: var(--ink-muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;">API Key</div>
+              <div style="display: flex; gap: 8px;">
+                <input id="byokKeyInput" type="password" placeholder="AIzaSy..." style="flex: 1; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; color: var(--ink); font-size: 13px; outline: none; font-family: var(--font-mono); transition: all 0.18s;" onfocus="this.style.borderColor='var(--signal-orange)';this.style.boxShadow='0 0 0 3px rgba(255,77,0,0.15)'" onblur="this.style.borderColor='';this.style.boxShadow=''">
+                <button onclick="toggleKeyVisibility()" style="padding: 0 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; color: var(--ink-muted); font-size: 16px; cursor: pointer; transition: all 0.15s;" title="Show/hide key"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
+            </div>
+            <!-- Test Connection -->
+            <div style="padding: 16px 24px 0; display: flex; gap: 10px; align-items: center;">
+              <button onclick="simulateKeyTest()" style="display: flex; align-items: center; gap: 8px; padding: 9px 18px; background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: 10px; color: var(--ink); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.borderColor='var(--signal-orange)'" onmouseout="this.style.borderColor='var(--border-strong)'">
+                <span id="testSpinner" style="display: none; width: 12px; height: 12px; border: 2px solid var(--signal-orange); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></span>
+                Test Connection
+              </button>
+              <div id="byokStatus" style="font-size: 11px; font-family: var(--font-mono); color: var(--ink-muted);">No test run yet</div>
+            </div>
+            <!-- Status Results: All Error States -->
+            <div style="padding: 16px 24px 24px; display: flex; flex-direction: column; gap: 8px;">
+              <div style="padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(50,215,75,0.35); background: rgba(50,215,75,0.08); display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11px; color: var(--signal-mint); font-weight: 600; display: flex; align-items: center; gap: 6px;">● Valid Key — Connection verified (234ms)</span>
+                <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted);">HTTP 200</span>
+              </div>
+              <div style="padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,69,58,0.35); background: rgba(255,69,58,0.08); display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11px; color: var(--signal-red); font-weight: 600; display: flex; align-items: center; gap: 6px;">● Invalid Key — Please check your key</span>
+                <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted);">HTTP 403</span>
+              </div>
+              <div style="padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(251,191,36,0.35); background: rgba(251,191,36,0.08); display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11px; color: var(--signal-amber); font-weight: 600; display: flex; align-items: center; gap: 6px;"> Quota exhausted — Retry in 60s</span>
+                <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted);">HTTP 429</span>
+              </div>
+              <div style="padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11px; color: var(--ink-muted); font-weight: 600; display: flex; align-items: center; gap: 6px;">● Offline — Cannot connect to localhost:11434</span>
+                <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted);">ECONNREFUSED</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 13: Offline Fallback Recovery HUD ───────────────── -->
+      <section id="section-fallback" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">EDGE CASE RECOVERY</div>
+          <h2 class="section-title">Offline Fallback Recovery System</h2>
+          <p class="section-desc">When AI synthesis fails (missing key, network drop, quota limit), Scribe never crashes. It instantly generates a deterministic structural graph and displays a recovery HUD.</p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Offline Recovery HUD Banner (Top of Canvas)</span>
+            <span class="component-badge">Auto-triggered on failure</span>
+          </div>
+          <div class="preview-stage" style="flex-direction: column; gap: 12px; align-items: stretch;">
+            <!-- HUD Banner -->
+            <div style="display: flex; align-items: center; gap: 10px; padding: 9px 16px; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.35); border-radius: 9999px; width: fit-content;">
+              <span style="color: var(--signal-amber);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+              <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: #92400e; letter-spacing: 0.06em;">Offline Fallback Graph</span>
+              <button onclick="triggerToast('Opening BYOK Configuration...')" style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; text-transform: uppercase; color: #78350f; text-decoration: underline; background: none; border: none; cursor: pointer; letter-spacing: 0.08em;">Configure API Key</button>
+            </div>
+
+            <!-- Fallback explanation -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%;">
+              <div style="padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+                <div style="font-size: 10px; font-family: var(--font-mono); color: var(--signal-amber); font-weight: 900; letter-spacing: 0.1em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;"> HEURISTIC MODE</div>
+                <p style="font-size: 12px; color: var(--ink-secondary); line-height: 1.5;">Map built deterministically from markdown headings, bullet points, and paragraphs. Zero API calls. Zero latency (&lt;5ms).</p>
+              </div>
+              <div style="padding: 16px; background: var(--bg-card); border: 1px solid rgba(50,215,75,0.2); border-radius: 12px;">
+                <div style="font-size: 10px; font-family: var(--font-mono); color: var(--signal-mint); font-weight: 900; letter-spacing: 0.1em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">● AI MODE RESTORED</div>
+                <p style="font-size: 12px; color: var(--ink-secondary); line-height: 1.5;">After saving BYOK key, map auto-reconstructs with Gemini 2.5 Flash synthesis. No page refresh required.</p>
+              </div>
+            </div>
+
+            <!-- Failure Decision Tree -->
+            <div style="background: #07080a; border: 1px solid var(--border); border-radius: 12px; padding: 20px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted); line-height: 1.9;">
+              <div style="color: var(--ink); font-weight: 700; margin-bottom: 10px;">Failure Recovery Decision Tree</div>
+              <div>synthesize() ──▶ API call fails?</div>
+              <div style="padding-left: 20px; border-left: 1px solid var(--border); margin-left: 8px;">├── HTTP 403/400 ──▶ <span style="color: var(--signal-amber);">Heuristic graph + BYOK HUD</span></div>
+              <div style="padding-left: 20px; border-left: 1px solid var(--border); margin-left: 8px;">├── HTTP 429 ──▶ <span style="color: var(--signal-amber);">Heuristic graph + quota notice</span></div>
+              <div style="padding-left: 20px; border-left: 1px solid var(--border); margin-left: 8px;">├── OFFLINE ──▶ <span style="color: var(--signal-amber);">Heuristic graph + reconnect toast</span></div>
+              <div style="padding-left: 20px; border-left: 1px solid var(--border); margin-left: 8px;">├── Empty JSON ──▶ <span style="color: var(--signal-amber);">safeJsonParse() + heuristic fallback</span></div>
+              <div style="padding-left: 20px; margin-left: 8px;">└── No key ──▶ <span style="color: var(--signal-mint);">Immediate heuristic (0ms) + BYOK prompt</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 14: User Flow Diagrams ─────────────────────────── -->
+      <section id="section-userflow" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">USER EXPERIENCE ARCHITECTURE</div>
+          <h2 class="section-title">User Flow Architecture</h2>
+          <p class="section-desc">Four core user flows visualized as interactive flow diagrams. Each node is clickable to simulate the real navigation step.</p>
+        </div>
+
+        <!-- Flow 1: Onboarding -->
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Flow 1 — Onboarding & BYOK Setup</span>
+            <span class="component-badge">~2 min journey</span>
+          </div>
+          <div style="overflow-x: auto; padding-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 0; min-width: 800px;">
+              <!-- Steps -->
+              <div id="flow1-step1" class="flow-step flow-step-active" onclick="advanceFlow('flow1', 1)">
+                <div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">01</div>
+                <div class="flow-label">Visit Landing</div>
+                <div class="flow-sub">Hero CTA</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div id="flow1-step2" class="flow-step" onclick="advanceFlow('flow1', 2)">
+                <div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">02</div>
+                <div class="flow-label">Set API Key</div>
+                <div class="flow-sub">BYOK Modal</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div id="flow1-step3" class="flow-step" onclick="advanceFlow('flow1', 3)">
+                <div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">03</div>
+                <div class="flow-label">Test Connection</div>
+                <div class="flow-sub">Live Ping</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div id="flow1-step4" class="flow-step" onclick="advanceFlow('flow1', 4)">
+                <div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">04</div>
+                <div class="flow-label">Key Verified</div>
+                <div class="flow-sub">HTTP 200 OK</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div id="flow1-step5" class="flow-step" onclick="advanceFlow('flow1', 5)">
+                <div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">05</div>
+                <div class="flow-label">Enter Workspace</div>
+                <div class="flow-sub">Canvas Ready</div>
+              </div>
+            </div>
+            <div style="margin-top: 12px; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 11px; color: var(--ink-muted);">Click each step to simulate progression. The active step glows in orange.</div>
+          </div>
+        </div>
+
+        <!-- Flow 2: Document → Graph -->
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Flow 2 — File Upload → Spatial Graph Synthesis</span>
+            <span class="component-badge">Happy Path + Fallback</span>
+          </div>
+          <div style="overflow-x: auto; padding-bottom: 8px;">
+            <div style="min-width: 900px; display: flex; flex-direction: column; gap: 16px;">
+              <!-- Happy Path -->
+              <div>
+                <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; color: var(--signal-mint); letter-spacing: 0.15em; margin-bottom: 8px;">● HAPPY PATH (API Key Set)</div>
+                <div style="display: flex; align-items: center; gap: 0;">
+                  <div class="flow-step flow-step-mint"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">IN</div><div class="flow-label">Upload File</div><div class="flow-sub">PDF/MD/TXT</div></div>
+                  <div class="flow-arrow" style="color: var(--signal-mint);">→</div>
+                  <div class="flow-step flow-step-mint"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">OP</div><div class="flow-label">Parse Content</div><div class="flow-sub">Client-side</div></div>
+                  <div class="flow-arrow" style="color: var(--signal-mint);">→</div>
+                  <div class="flow-step flow-step-mint"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">AI</div><div class="flow-label">2-Pass AI Synthesis</div><div class="flow-sub">Gemini 2.5</div></div>
+                  <div class="flow-arrow" style="color: var(--signal-mint);">→</div>
+                  <div class="flow-step flow-step-mint"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">05</div><div class="flow-label">Render GigaMap</div><div class="flow-sub">D3 Canvas</div></div>
+                </div>
+              </div>
+              <!-- Fallback Path -->
+              <div>
+                <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; color: var(--signal-amber); letter-spacing: 0.15em; margin-bottom: 8px;"> OFFLINE FALLBACK (No API Key / Failure)</div>
+                <div style="display: flex; align-items: center; gap: 0;">
+                  <div class="flow-step flow-step-amber"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">IN</div><div class="flow-label">Upload File</div><div class="flow-sub">PDF/MD/TXT</div></div>
+                  <div class="flow-arrow" style="color: var(--signal-amber);">→</div>
+                  <div class="flow-step flow-step-amber"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">ERR</div><div class="flow-label">API Fails</div><div class="flow-sub">403/429/OFFLINE</div></div>
+                  <div class="flow-arrow" style="color: var(--signal-amber);">→</div>
+                  <div class="flow-step flow-step-amber"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">REC</div><div class="flow-label">Heuristic Parse</div><div class="flow-sub">&lt;5ms local</div></div>
+                  <div class="flow-arrow" style="color: var(--signal-amber);">→</div>
+                  <div class="flow-step flow-step-amber"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">05</div><div class="flow-label">Render Graph</div><div class="flow-sub">+ Recovery HUD</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flow 3: Workbench Protocol -->
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Flow 3 — Workbench Protocol Execution (Human-in-the-Loop)</span>
+            <span class="component-badge">EU AI Act Art. 14</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <div style="display: flex; align-items: center; gap: 0; min-width: 950px;">
+              <div class="flow-step flow-step-violet"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">01</div><div class="flow-label">Select Node</div><div class="flow-sub">Click canvas</div></div>
+              <div class="flow-arrow" style="color: var(--signal-violet);">→</div>
+              <div class="flow-step flow-step-violet"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">02</div><div class="flow-label">Pick Protocol</div><div class="flow-sub">SCAMPER / Pillars</div></div>
+              <div class="flow-arrow" style="color: var(--signal-violet);">→</div>
+              <div class="flow-step flow-step-violet" style="border-color: rgba(251,191,36,0.5); background: rgba(251,191,36,0.07);"><div class="flow-icon" style="font-size: 22px;"></div><div class="flow-label" style="color: var(--signal-amber);">Step-Gate Confirm</div><div class="flow-sub">Art. 14 Gate</div></div>
+              <div class="flow-arrow" style="color: var(--signal-violet);">→</div>
+              <div class="flow-step flow-step-violet"><div class="flow-icon" style="font-family:var(--font-mono); font-size:11px; font-weight:800;">AI</div><div class="flow-label">AI Executes</div><div class="flow-sub">Gemini dispatch</div></div>
+              <div class="flow-arrow" style="color: var(--signal-violet);">→</div>
+              <div class="flow-step flow-step-violet"><div class="flow-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6.1 4.5 2.3 7.3-6.2-4.6-6.2 4.6 2.3-7.3-6.1-4.5h7.6z"/></svg></div><div class="flow-label">Nodes Injected</div><div class="flow-sub">Beacon glow</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 15: EU AI Act Compliance Components ─────────────── -->
+      <section id="section-euaiact" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">EU AI ACT COMPLIANCE // TSOT CERTIFIED</div>
+          <h2 class="section-title">EU AI Act Compliance Components</h2>
+          <p class="section-desc">Every AI-generated output is wrapped in statutory transparency metadata. Scribe implements Articles 13, 14, and 50 of the EU AI Act at the component level.</p>
+        </div>
+
+        <!-- Art. 50 Transparency Badge -->
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Art. 50 — Algorithmic Transparency Badge</span>
+            <span class="component-badge">Statutory Mandatory</span>
+          </div>
+          <div class="preview-stage" style="gap: 20px; flex-wrap: wrap; justify-content: flex-start;">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 9999px; background: rgba(255,77,0,0.08); border: 1px solid rgba(255,77,0,0.28); backdrop-filter: blur(8px);">
+              <span style="color: var(--signal-orange);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+              <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; color: var(--signal-orange); letter-spacing: 0.15em; text-transform: uppercase;">EU AI Act Art. 50 // Algorithmic Spatial Synthesis</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 9999px; background: rgba(50,215,75,0.08); border: 1px solid rgba(50,215,75,0.28);">
+              <span style="color: var(--signal-mint);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:middle;"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; color: var(--signal-mint); letter-spacing: 0.15em; text-transform: uppercase;">Art. 14 // Human-in-the-Loop Verified</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 9999px; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.28);">
+              <span style="color: var(--signal-amber);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+              <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; color: var(--signal-amber); letter-spacing: 0.15em; text-transform: uppercase;">Offline Fallback Graph</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Art. 14 Step-Gate Panel -->
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Art. 14 — Step-Gate Confirmation Panel</span>
+            <span class="component-badge">Human-in-the-Loop</span>
+          </div>
+          <div style="max-width: 480px; margin: 0 auto;">
+            <!-- Step-Gate Banner -->
+            <div style="margin-bottom: 14px; padding: 12px 16px; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 900; color: var(--signal-amber); display: flex; align-items: center; gap: 6px;"> STEP-GATE ENABLED</span>
+              <span style="font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted);">EU AI ACT ART. 14(4)</span>
+            </div>
+            <!-- Protocol Select -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+              <div id="sg-scamper" style="padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 8px;" onclick="selectSGProtocol('sg-scamper', this)" onmouseover="this.style.borderColor='#6366f1'" onmouseout="if(!this.classList.contains('sg-active'))this.style.borderColor=''">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg><span style="font-size: 12px; font-weight: 600; color: var(--ink);">SCAMPER</span>
+              </div>
+              <div id="sg-firstprinciples" style="padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 8px;" onclick="selectSGProtocol('sg-firstprinciples', this)" onmouseover="this.style.borderColor='#10b981'" onmouseout="if(!this.classList.contains('sg-active'))this.style.borderColor=''">
+                <span style="font-family:var(--font-mono); font-size:10px; font-weight:900;">GOAL</span><span style="font-size: 12px; font-weight: 600; color: var(--ink);">First Principles</span>
+              </div>
+              <div id="sg-analogy" style="padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 8px;" onclick="selectSGProtocol('sg-analogy', this)" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="if(!this.classList.contains('sg-active'))this.style.borderColor=''">
+                <span style="font-family:var(--font-mono); font-size:10px; font-weight:900;">ENV</span><span style="font-size: 12px; font-weight: 600; color: var(--ink);">Analogy</span>
+              </div>
+              <div id="sg-premortem" style="padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 8px;" onclick="selectSGProtocol('sg-premortem', this)" onmouseover="this.style.borderColor='#ef4444'" onmouseout="if(!this.classList.contains('sg-active'))this.style.borderColor=''">
+                <span style="font-size: 14px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><span style="font-size: 12px; font-weight: 600; color: var(--ink);">Pre-Mortem</span>
+              </div>
+            </div>
+            <!-- Pending Confirm State -->
+            <div id="sgConfirmBanner" style="display: none; margin-bottom: 12px; padding: 14px 16px; background: rgba(50,215,75,0.07); border: 1.5px solid rgba(50,215,75,0.4); border-radius: 12px;">
+              <p style="font-size: 12px; color: var(--ink-secondary); margin-bottom: 10px;"><strong style="color: var(--ink);">Step 1 of 2:</strong> Review the AI's proposed action before confirming execution. You retain full override authority.</p>
+              <button onclick="confirmSGExecution()" style="display: flex; align-items: center; gap: 8px; padding: 9px 18px; background: var(--signal-mint); border: none; border-radius: 10px; color: #000; font-size: 12px; font-weight: 800; cursor: pointer; animation: statusBlink 2s ease-in-out infinite;"> Confirm & Mutate Canvas</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Epistemic Ledger -->
+        <div class="component-card">
+          <div class="component-header">
+            <span class="component-title">Art. 13 — Spatial Epistemic Ledger (Provenance Audit)</span>
+            <span class="component-badge">[SOT-D3AUX3]</span>
+          </div>
+          <div style="max-width: 480px; margin: 0 auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span style="font-size: 13px; font-weight: 700; color: var(--ink);">Spatial Epistemic Ledger</span>
+              </div>
+              <span style="font-family: var(--font-mono); font-size: 9px; padding: 3px 8px; border-radius: 9999px; background: rgba(50,215,75,0.12); border: 1px solid rgba(50,215,75,0.3); color: var(--signal-mint); font-weight: 700;">96% Confidence</span>
+            </div>
+            <p style="font-size: 11px; color: var(--ink-secondary); line-height: 1.5; margin-bottom: 12px;">
+              Synthesized via deterministic 2-pass pillar-cluster hierarchy. Zero external telemetry custody. Full BYOK client-side execution.
+            </p>
+            <div style="display: flex; gap: 20px; padding-top: 10px; border-top: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 10px; color: var(--ink-muted);">
+              <span>Latency: Damped (90%)</span>
+              <span>•</span>
+              <span>EU Risk Class: Limited</span>
+              <span>•</span>
+              <span>Human Override: VERIFIED</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 16: Sitemap & Information Architecture ──────────── -->
+      <section id="section-sitemap" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">INFORMATION ARCHITECTURE</div>
+          <h2 class="section-title">System Sitemap</h2>
+          <p class="section-desc">Complete navigational anatomy of the Scribe application — from landing page through spatial canvas modals and the client-side zero-custody storage layer.</p>
+        </div>
+
+        <div class="component-card">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+            <!-- Route Cards -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; border-top: 3px solid var(--signal-orange);">
+              <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; color: var(--signal-orange); letter-spacing: 0.12em; margin-bottom: 6px;">PUBLIC</div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 8px;">/ Landing</div>
+              <ul style="list-style: none; display: flex; flex-direction: column; gap: 4px;">
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(255,77,0,0.3);">Hero + CTA</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(255,77,0,0.3);">6 Demo Video Pairs</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(255,77,0,0.3);">Feature Bento Grid</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(255,77,0,0.3);">BYOK Zero-Custody Banner</li>
+              </ul>
+            </div>
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; border-top: 3px solid var(--signal-blue);">
+              <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; color: var(--signal-blue); letter-spacing: 0.12em; margin-bottom: 6px;">WORKSPACE</div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 8px;">/app Canvas</div>
+              <ul style="list-style: none; display: flex; flex-direction: column; gap: 4px;">
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(10,132,255,0.3);">Macro Spatial Canvas</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(10,132,255,0.3);">Document Sidebar</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(10,132,255,0.3);">Cartridge Dock</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(10,132,255,0.3);">Strategist AI Panel</li>
+              </ul>
+            </div>
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; border-top: 3px solid var(--signal-violet);">
+              <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; color: var(--signal-violet); letter-spacing: 0.12em; margin-bottom: 6px;">SPATIAL MODALS</div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 8px;">GigaMap Views</div>
+              <ul style="list-style: none; display: flex; flex-direction: column; gap: 4px;">
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(191,90,242,0.3);">Oatsen GigaMap (3-tier)</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(191,90,242,0.3);">Oracle Radial Map</li>
+                <li style="font-family: var(--font-mono); font-size: 11px; color: var(--signal-violet); padding-left: 12px; border-left: 2px solid rgba(191,90,242,0.3);">← Recovery HUD</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(191,90,242,0.3);">Graph Chatbot</li>
+              </ul>
+            </div>
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; border-top: 3px solid var(--signal-mint);">
+              <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; color: var(--signal-mint); letter-spacing: 0.12em; margin-bottom: 6px;">MODALS & OVERLAYS</div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 8px;">Global Controls</div>
+              <ul style="list-style: none; display: flex; flex-direction: column; gap: 4px;">
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(50,215,75,0.3);">BYOK Settings Modal</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(50,215,75,0.3);">Export Modal</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(50,215,75,0.3);">Multi-File Ingestion</li>
+                <li style="font-size: 11px; color: var(--ink-secondary); padding-left: 12px; border-left: 2px solid rgba(50,215,75,0.3);">Multi-Graph Selector</li>
+              </ul>
+            </div>
+            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; border-top: 3px solid var(--ink-muted); grid-column: span 2;">
+              <div style="font-family: var(--font-mono); font-size: 9px; font-weight: 900; color: var(--ink-muted); letter-spacing: 0.12em; margin-bottom: 6px;">CLIENT-SIDE ZERO-CUSTODY STORAGE</div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 8px;">Local Browser Layer</div>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <div style="padding: 8px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted);">IndexedDB <span style="color: var(--ink-secondary);">/ workspaces, notes, sessions</span></div>
+                <div style="padding: 8px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted);">localStorage <span style="color: var(--ink-secondary);">/ byok_config, gigamap_cache, theme</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section 17: Form Components & Inputs ──────────────────── -->
+      <section id="section-inputs" class="doc-section">
+        <div class="section-header">
+          <div class="section-tag">ATOMS</div>
+          <h2 class="section-title">Form Inputs & Controls</h2>
+          <p class="section-desc">All Scribe form controls with live states. Focus any field to see the orange accessibility ring.</p>
+        </div>
+        <div class="component-card">
+          <div style="display: flex; flex-direction: column; gap: 20px; max-width: 480px;">
+            <!-- Text input -->
+            <div>
+              <label style="display: block; font-size: 10px; font-family: var(--font-mono); color: var(--ink-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px;">Document Title</label>
+              <input type="text" placeholder="e.g. 'Q4 Strategy Analysis'" value="Enterprise Architecture v2" style="width: 100%; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; color: var(--ink); font-size: 13px; outline: none; transition: all 0.18s;" onfocus="this.style.borderColor='var(--signal-orange)';this.style.boxShadow='0 0 0 3px rgba(255,77,0,0.15)'" onblur="this.style.borderColor='';this.style.boxShadow=''">
+            </div>
+            <!-- Textarea -->
+            <div>
+              <label style="display: block; font-size: 10px; font-family: var(--font-mono); color: var(--ink-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px;">Notes Content</label>
+              <textarea placeholder="Paste your research notes here..." rows="3" style="width: 100%; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; color: var(--ink); font-size: 13px; outline: none; resize: vertical; font-family: var(--font-sans); transition: all 0.18s;" onfocus="this.style.borderColor='var(--signal-orange)';this.style.boxShadow='0 0 0 3px rgba(255,77,0,0.15)'" onblur="this.style.borderColor='';this.style.boxShadow=''"></textarea>
+            </div>
+            <!-- Select -->
+            <div>
+              <label style="display: block; font-size: 10px; font-family: var(--font-mono); color: var(--ink-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px;">AI Provider</label>
+              <select style="width: 100%; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; color: var(--ink); font-size: 13px; outline: none; appearance: none; cursor: pointer; transition: all 0.18s;" onfocus="this.style.borderColor='var(--signal-orange)'" onblur="this.style.borderColor=''">
+                <option>Google Gemini 2.5 Flash</option>
+                <option>Gemini 2.0 Flash</option>
+                <option>Local AI (Ollama)</option>
+              </select>
+            </div>
+            <!-- Toggle / Checkbox -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+              <div>
+                <div style="font-size: 13px; font-weight: 600; color: var(--ink);">EU AI Act Step-Gate Mode</div>
+                <div style="font-size: 11px; color: var(--ink-muted);">Require human confirmation before AI mutations</div>
+              </div>
+              <div id="toggleSwitch" onclick="toggleSwitch()" style="width: 44px; height: 26px; border-radius: 13px; background: var(--signal-orange); cursor: pointer; position: relative; transition: all 0.2s;">
+                <div id="toggleThumb" style="position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%; background: #000; transition: all 0.2s;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+
+  <!-- Toast Element -->
+  <div id="toastNotification" class="toast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color: var(--signal-orange); shrink: 0;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    <span id="toastMsg">Token copied to clipboard!</span>
+  </div>
+
+  <script>
+    // Theme Switcher
+    function setTheme(theme, btn) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.querySelectorAll('.top-toolbar .control-group:first-child .control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      triggerToast(`Theme switched to: ${theme.toUpperCase()}`);
+    }
+
+    // State Forcer
+    function setForcedState(stateClass, btn) {
+      document.body.className = stateClass === 'none' ? '' : stateClass;
+      document.querySelectorAll('.toolbar-right .control-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      triggerToast(stateClass === 'none' ? 'Restored interactive states' : `Forced state: ${stateClass}`);
+    }
+
+    // Toast Notification
+    function triggerToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2400);
+    }
+
+    // Copy Token
+    function copyToken(tokenVar, hex) {
+      const text = `${tokenVar}: ${hex};`;
+      navigator.clipboard.writeText(text);
+      triggerToast(`Copied ${tokenVar} (${hex}) to clipboard!`);
+    }
+
+    // Copy Code Block
+    function copyCodeSnippet() {
+      const code = document.getElementById('codeExportBlock').innerText;
+      navigator.clipboard.writeText(code);
+      triggerToast('JSON Tokens copied to clipboard!');
+    }
+
+    // Interactive Cartridge Toggle
+    function toggleCartridge(element, name) {
+      document.querySelectorAll('.dock-cartridge').forEach(c => c.classList.remove('active'));
+      element.classList.add('active');
+      triggerToast(`Active Cartridge: ${name}`);
+    }
+
+    // Interactive Swamp Selector
+    function selectSwampPackage(card) {
+      document.querySelectorAll('.swamp-card').forEach(c => {
+        c.classList.remove('selected');
+        const badge = c.querySelector('.component-badge');
+        if (badge) badge.remove();
+      });
+      card.classList.add('selected');
+      const header = card.querySelector('.swamp-header');
+      const badge = document.createElement('span');
+      badge.className = 'component-badge';
+      badge.style.color = 'var(--signal-orange)';
+      badge.innerText = 'ACTIVE';
+      header.appendChild(badge);
+      triggerToast(`Selected Swarm: ${card.querySelector('.swamp-title').innerText}`);
+    }
+
+    // Quick Search Filter
+    document.getElementById('filterInput').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll('.component-card, .doc-section').forEach(el => {
+        if (!q) {
+          el.style.display = '';
+          return;
+        }
+        const text = el.innerText.toLowerCase();
+        el.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+
+    // Step-Gate Mode Toggle (TSOT [SOT-COMP-2026])
+    let isStepGateActive = true;
+    function toggleDemoStepGate(btn) {
+      isStepGateActive = !isStepGateActive;
+      btn.innerText = isStepGateActive ? 'ENABLED (Verified)' : 'DISABLED (Direct)';
+      btn.className = isStepGateActive ? 'scribe-btn scribe-btn-primary' : 'scribe-btn scribe-btn-secondary';
+      triggerToast(`Step-Gate Mode: ${isStepGateActive ? 'Enabled (Dissent checks active)' : 'Disabled'}`);
+    }
+
+    // 2-Step Verified Apply (TSOT [SOT-COMP-3012])
+    let isAwaitingConfirm = false;
+    function handleDemoApply(btn) {
+      if (!isAwaitingConfirm) {
+        isAwaitingConfirm = true;
+        btn.innerText = 'Confirm & Mutate Canvas';
+        btn.className = 'scribe-btn scribe-btn-primary';
+        triggerToast('Step 1: Review rationale. Click again to confirm mutation.');
+      } else {
+        isAwaitingConfirm = false;
+        btn.innerText = 'Applied to Workspace';
+        btn.className = 'scribe-btn scribe-btn-secondary';
+        triggerToast('Step 2: Workspace nodes updated with human verification.');
+      }
+    }
+
+    // Flow Stepper
+    const flowState = {};
+    function advanceFlow(flowId, step) {
+      flowState[flowId] = step;
+      const stepLabels = {
+        'flow1': ['Visit Landing','Set API Key','Test Connection','Key Verified','Enter Workspace']
+      };
+      for (let i = 1; i <= 5; i++) {
+        const el = document.getElementById(`${flowId}-step${i}`);
+        if (!el) continue;
+        el.classList.remove('flow-step-active');
+        if (i <= step) el.classList.add('flow-step-active');
+        else el.classList.remove('flow-step-active');
+      }
+      const labels = stepLabels[flowId];
+      if (labels && labels[step - 1]) triggerToast(`Flow Step ${step}: ${labels[step - 1]}`);
+    }
+
+    // BYOK Provider Selector
+    function selectProvider(provider) {
+      const g = document.getElementById('provGemini');
+      const l = document.getElementById('provLocal');
+      if (provider === 'gemini') {
+        g.style.borderColor = 'var(--signal-orange)'; g.style.borderWidth = '1.5px'; g.style.background = 'rgba(255,77,0,0.1)'; g.style.color = 'var(--ink)';
+        l.style.borderColor = ''; l.style.borderWidth = '1px'; l.style.background = 'var(--bg-card)'; l.style.color = 'var(--ink-muted)';
+        triggerToast('Provider: Google Gemini 2.5 Flash selected');
+      } else {
+        l.style.borderColor = 'var(--signal-blue)'; l.style.borderWidth = '1.5px'; l.style.background = 'rgba(10,132,255,0.1)'; l.style.color = 'var(--ink)';
+        g.style.borderColor = ''; g.style.borderWidth = '1px'; g.style.background = 'var(--bg-card)'; g.style.color = 'var(--ink-muted)';
+        triggerToast('Provider: Local AI (Ollama) selected');
+      }
+    }
+
+    // BYOK Key visibility toggle
+    function toggleKeyVisibility() {
+      const inp = document.getElementById('byokKeyInput');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    // Simulate key test
+    const testScenarios = [
+      { msg: '● Connection verified (234ms)', color: 'var(--signal-mint)' },
+      { msg: '● Invalid Key — HTTP 403 Forbidden', color: 'var(--signal-red)' },
+      { msg: '● Quota exhausted — Retry in 60s (HTTP 429)', color: 'var(--signal-amber)' },
+      { msg: '● Offline — ECONNREFUSED', color: 'var(--ink-muted)' },
+    ];
+    let testScenarioIdx = 0;
+    function simulateKeyTest() {
+      const spinner = document.getElementById('testSpinner');
+      const status = document.getElementById('byokStatus');
+      spinner.style.display = 'inline-block';
+      status.innerText = 'Testing…';
+      status.style.color = 'var(--ink-muted)';
+      setTimeout(() => {
+        spinner.style.display = 'none';
+        const s = testScenarios[testScenarioIdx % testScenarios.length];
+        testScenarioIdx++;
+        status.innerText = s.msg;
+        status.style.color = s.color;
+        triggerToast(s.msg);
+      }, 1200);
+    }
+
+    // Step-Gate Protocol Selector
+    function selectSGProtocol(id, el) {
+      document.querySelectorAll('#sg-scamper, #sg-firstprinciples, #sg-analogy, #sg-premortem').forEach(e => {
+        e.classList.remove('sg-active');
+        e.style.borderColor = '';
+        e.style.background = 'var(--bg-card)';
+      });
+      el.classList.add('sg-active');
+      el.style.background = 'rgba(50,215,75,0.08)';
+      el.style.borderColor = 'rgba(50,215,75,0.5)';
+      document.getElementById('sgConfirmBanner').style.display = 'block';
+      triggerToast(`Protocol selected: ${el.querySelector('span:last-child').innerText}. Step-gate pending.`);
+    }
+
+    // Confirm step-gate
+    function confirmSGExecution() {
+      document.getElementById('sgConfirmBanner').style.display = 'none';
+      document.querySelectorAll('#sg-scamper, #sg-firstprinciples, #sg-analogy, #sg-premortem').forEach(e => {
+        e.classList.remove('sg-active');
+        e.style.borderColor = '';
+        e.style.background = 'var(--bg-card)';
+      });
+      triggerToast('Step 2: Human verification complete. Canvas mutated.');
+    }
+
+    // Toggle switch
+    let toggleOn = true;
+    function toggleSwitch() {
+      toggleOn = !toggleOn;
+      const sw = document.getElementById('toggleSwitch');
+      const thumb = document.getElementById('toggleThumb');
+      if (toggleOn) {
+        sw.style.background = 'var(--signal-orange)';
+        thumb.style.right = '3px'; thumb.style.left = '';
+        triggerToast('EU AI Act Step-Gate: ENABLED');
+      } else {
+        sw.style.background = 'var(--bg-card-hover)';
+        thumb.style.left = '3px'; thumb.style.right = '';
+        triggerToast('EU AI Act Step-Gate: DISABLED (Direct mode)');
+      }
+    }
+
+    // Active nav highlighting on scroll
+    const sections = document.querySelectorAll('.doc-section');
+    const navItems = document.querySelectorAll('.nav-item');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('href') === `#${id}`) item.classList.add('active');
+          });
+        }
+      });
+    }, { threshold: 0.25 });
+    sections.forEach(s => observer.observe(s));
+  </script>
+</body>
+</html>

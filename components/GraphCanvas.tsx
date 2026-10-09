@@ -729,7 +729,9 @@ export default function GraphCanvas({
                             <span>Regenerate</span>
                         </button>
                     )}
-                    {Object.entries(AI_LENS_CONFIGS).map(([key, cfg]) => {
+                    {Object.entries(AI_LENS_CONFIGS)
+                        .filter(([key]) => key !== 'swamp' && key !== 'strategist')
+                        .map(([key, cfg]) => {
                         const isActive = activeAiLens === key;
                         return (
                             <button key={key} onClick={() => handleTriggerAi(key)} disabled={isSynthesizing && !isActive}
@@ -788,7 +790,7 @@ export default function GraphCanvas({
                             
                             <div className="flex flex-col gap-2">
                                 <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1">AI Lenses</span>
-                                {activeAiLens && (
+                                {activeAiLens && activeAiLens !== 'swamp' && activeAiLens !== 'strategist' && (
                                     <button 
                                         onClick={() => { handleTriggerAi(activeAiLens, true); setIsMobileMenuOpen(false); }} 
                                         disabled={isSynthesizing}
@@ -798,7 +800,9 @@ export default function GraphCanvas({
                                         Regenerate
                                     </button>
                                 )}
-                                {Object.entries(AI_LENS_CONFIGS).map(([key, cfg]) => {
+                                {Object.entries(AI_LENS_CONFIGS)
+                                    .filter(([key]) => key !== 'swamp' && key !== 'strategist')
+                                    .map(([key, cfg]) => {
                                     const isActive = activeAiLens === key;
                                     return (
                                         <button key={key} onClick={() => { handleTriggerAi(key); setIsMobileMenuOpen(false); }} disabled={isSynthesizing && !isActive}
